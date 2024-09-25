@@ -15,6 +15,15 @@ const Producto = {
     [producto.nombre, producto.stock, producto.precio], callback);
   },
 
+  updateById: (id, producto, callback) => {
+    db.query('UPDATE productos SET nombre = ?, stock = ?, precio = ? WHERE id = ?', 
+    [producto.nombre, producto.stock, producto.precio, id], callback);
+  },
+
+  deleteById: (id, callback) => {
+    db.query('DELETE FROM productos WHERE id = ?', [id], callback);
+  },
+
   updateStock: (id, stock, callback) => {
     db.query('UPDATE productos SET stock = ? WHERE id = ?', [stock, id], callback);
   }
