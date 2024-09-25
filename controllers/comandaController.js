@@ -4,10 +4,28 @@ const Producto = require('../models/Producto');
 const axios = require('axios');
 require('dotenv').config();
 
+// Obtener todas las comandas
+exports.getAllComandas = (req, res) => {
+  Comanda.getAll((err, comandas) => {
+    if (err) return res.status(500).send(err);
+    res.json(comandas);
+  });
+};
+
+// Obtener una comanda por ID
+exports.getComandaById = (req, res) => {
+  const { id } = req.params;
+  Comanda.getById(id, (err, comanda) => {
+    if (err) return res.status(500).send(err);
+    if (!comanda.length) return res.status(404).send('Comanda no encontrada');
+    res.json(comanda[0]);
+  });
+};
+
+// Crear una nueva comanda
 exports.createComanda = async (req, res) => {
   const { id_producto, cantidad } = req.body;
 
-  // Obtener el producto y verificar el stock
   Producto.getById(id_producto, async (err, productos) => {
     if (err) return res.status(500).send(err);
     const producto = productos[0];
@@ -15,14 +33,12 @@ exports.createComanda = async (req, res) => {
     if (!producto) return res.status(404).send('Producto no encontrado');
     if (producto.stock < cantidad) return res.status(400).send('Stock insuficiente');
 
-    // Obtener cotización del dólar desde una API externa
     try {
       const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
-      const cotizacionDolar = response.data.rates.ARS; // Cotización del dólar en pesos argentinos
+      const cotizacionDolar = response.data.rates.ARS;
 
       const precioTotal = producto.precio * cantidad * cotizacionDolar;
 
-      // Crear comanda en la base de datos
       const nuevaComanda = {
         id_producto,
         cantidad,
@@ -33,7 +49,6 @@ exports.createComanda = async (req, res) => {
       Comanda.create(nuevaComanda, (err, result) => {
         if (err) return res.status(500).send(err);
 
-        // Actualizar stock del producto
         const nuevoStock = producto.stock - cantidad;
         Producto.updateStock(id_producto, nuevoStock, (err, result) => {
           if (err) return res.status(500).send(err);
@@ -45,3 +60,27 @@ exports.createComanda = async (req, res) => {
     }
   });
 };
+
+// Actualizar una comanda por ID
+exports.updateComanda = (req, res) => {
+  const { id } = req.params;
+  const { id_producto, cantidad, precio_total, cotizacion_dolar } = req.body;
+
+  Comanda.updateById(id, { id_producto, cantidad, precio_total, cotizacion_dolar }, (err, result) => {
+    if (err) return res.status(500).send(err);
+    if (result.affectedRows === 0) return res.status(404).send('Comanda no encontrada');
+    res.status(200).send('Comanda actualizada');
+  });
+};
+
+// Eliminar una comanda por ID
+exports.deleteComanda = (req, res) => {
+  const { id } = req.params;
+
+  Comanda.deleteById(id, (err, result) => {
+    if (err) return res.status(500).send(err);
+    if (result.affectedRows === 0) return res.status(404).send('Comanda no encontrada');
+    res.status(200).send('Comanda eliminada');
+  });
+};
+
