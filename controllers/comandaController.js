@@ -3,7 +3,12 @@ const Comanda = require('../models/Comanda');
 const Producto = require('../models/Producto');
 const axios = require('axios');
 require('dotenv').config();
-
+exports.getAllComandas = (req, res) => {
+  Comanda.getAll((err, comandas) => {
+    if (err) return res.status(500).send(err);
+    res.json(comandas);
+  });
+};
 // Crear una nueva comanda con múltiples productos
 exports.createComanda = async (req, res) => {
   const { productos } = req.body;
