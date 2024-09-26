@@ -4,83 +4,67 @@ const Producto = require('../models/Producto');
 const axios = require('axios');
 require('dotenv').config();
 
-// Obtener todas las comandas
-exports.getAllComandas = (req, res) => {
-  Comanda.getAll((err, comandas) => {
-    if (err) return res.status(500).send(err);
-    res.json(comandas);
-  });
-};
-
-// Obtener una comanda por ID
-exports.getComandaById = (req, res) => {
-  const { id } = req.params;
-  Comanda.getById(id, (err, comanda) => {
-    if (err) return res.status(500).send(err);
-    if (!comanda.length) return res.status(404).send('Comanda no encontrada');
-    res.json(comanda[0]);
-  });
-};
-
-// Crear una nueva comanda
+// Crear una nueva comanda con múltiples productos
 exports.createComanda = async (req, res) => {
-  const { id_producto, cantidad } = req.body;
+  const { productos } = req.body;  // El cliente debe enviar un array de productos [{id_producto, cantidad}, ...]
 
-  Producto.getById(id_producto, async (err, productos) => {
-    if (err) return res.status(500).send(err);
-    const producto = productos[0];
+  if (!productos || productos.length === 0) {
+    return res.status(400).send('Debes agregar al menos un producto');
+  }
 
-    if (!producto) return res.status(404).send('Producto no encontrado');
-    if (producto.stock < cantidad) return res.status(400).send('Stock insuficiente');
+  try {
+    // Obtener cotización del dólar desde una API externa
+    const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+    const cotizacionDolar = response.data.rates.ARS;
 
-    try {
-      const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
-      const cotizacionDolar = response.data.rates.ARS;
+    let precioTotal = 0;  // Para almacenar el precio total de la comanda
 
-      const precioTotal = producto.precio * cantidad * cotizacionDolar;
+    // Validar y calcular el total de la comanda
+    const productosProcesados = await Promise.all(productos.map(async (item) => {
+      const { id_producto, cantidad } = item;
 
-      const nuevaComanda = {
+      // Obtener el producto por ID
+      const producto = await Producto.getByIdPromise(id_producto); // Supongamos que getById ahora usa promesas
+      if (!producto) throw new Error(`Producto con id ${id_producto} no encontrado`);
+
+      // Verificar que haya suficiente stock
+      if (producto.stock < cantidad) throw new Error(`Stock insuficiente para el producto ${producto.nombre}`);
+
+      // Calcular el subtotal para el producto
+      const subtotal = producto.precio * cantidad * cotizacionDolar;
+      precioTotal += subtotal;
+
+      return {
         id_producto,
         cantidad,
-        precio_total: precioTotal,
-        cotizacion_dolar: cotizacionDolar
+        subtotal
       };
+    }));
 
-      Comanda.create(nuevaComanda, (err, result) => {
-        if (err) return res.status(500).send(err);
+    // Crear la comanda general en la base de datos
+    const nuevaComanda = {
+      precio_total: precioTotal,
+      cotizacion_dolar: cotizacionDolar
+    };
 
-        const nuevoStock = producto.stock - cantidad;
-        Producto.updateStock(id_producto, nuevoStock, (err, result) => {
-          if (err) return res.status(500).send(err);
-          res.status(201).send('Comanda creada y stock actualizado');
-        });
+    const comandaId = await Comanda.create(nuevaComanda); // Insertar la comanda en la tabla 'comandas' y obtener el ID
+
+    // Insertar cada producto en la tabla 'comanda_productos'
+    await Promise.all(productosProcesados.map(async (producto) => {
+      await Comanda.addProductoToComanda({
+        id_comanda: comandaId,
+        id_producto: producto.id_producto,
+        cantidad: producto.cantidad,
+        subtotal: producto.subtotal
       });
-    } catch (error) {
-      res.status(500).send('Error al obtener la cotización del dólar');
-    }
-  });
+
+      // Actualizar el stock de los productos
+      await Producto.updateStock(producto.id_producto, producto.cantidad);
+    }));
+
+    res.status(201).send('Comanda creada exitosamente con múltiples productos');
+  } catch (error) {
+    console.error('Error al crear la comanda:', error.message);
+    res.status(500).send('Error al crear la comanda');
+  }
 };
-
-// Actualizar una comanda por ID
-exports.updateComanda = (req, res) => {
-  const { id } = req.params;
-  const { id_producto, cantidad, precio_total, cotizacion_dolar } = req.body;
-
-  Comanda.updateById(id, { id_producto, cantidad, precio_total, cotizacion_dolar }, (err, result) => {
-    if (err) return res.status(500).send(err);
-    if (result.affectedRows === 0) return res.status(404).send('Comanda no encontrada');
-    res.status(200).send('Comanda actualizada');
-  });
-};
-
-// Eliminar una comanda por ID
-exports.deleteComanda = (req, res) => {
-  const { id } = req.params;
-
-  Comanda.deleteById(id, (err, result) => {
-    if (err) return res.status(500).send(err);
-    if (result.affectedRows === 0) return res.status(404).send('Comanda no encontrada');
-    res.status(200).send('Comanda eliminada');
-  });
-};
-
