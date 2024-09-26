@@ -1,7 +1,6 @@
-// routes/comandaRoutes.js
 const express = require('express');
 const router = express.Router();
-const comandaController = require('../controllers/comandaController');
+const comandaController = require('../controllers/comandaController'); // Asegúrate de que el controlador esté en la ruta correcta
 
 // Rutas para comandas
 router.get('/comandas', comandaController.getAllComandas);  // Obtener todas las comandas
