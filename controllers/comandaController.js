@@ -88,3 +88,33 @@ exports.createComanda = async (req, res) => {
     res.status(500).send('Error al crear la comanda: ' + error.message);
   }
 };
+// Obtener una comanda por ID
+exports.getComandaById = (req, res) => {
+  const { id } = req.params;
+  Comanda.getById(id, (err, comanda) => {
+    if (err) return res.status(500).send(err);
+    if (!comanda) return res.status(404).send('Comanda no encontrada');
+    res.json(comanda);
+  });
+};
+
+// Actualizar una comanda por ID
+exports.updateComanda = (req, res) => {
+  const { id } = req.params;
+  const actualizacion = req.body;
+  Comanda.updateById(id, actualizacion, (err, result) => {
+    if (err) return res.status(500).send(err);
+    if (result.affectedRows === 0) return res.status(404).send('Comanda no encontrada');
+    res.status(200).send('Comanda actualizada');
+  });
+};
+
+// Eliminar una comanda por ID
+exports.deleteComanda = (req, res) => {
+  const { id } = req.params;
+  Comanda.deleteById(id, (err, result) => {
+    if (err) return res.status(500).send(err);
+    if (result.affectedRows === 0) return res.status(404).send('Comanda no encontrada');
+    res.status(200).send('Comanda eliminada');
+  });
+};
