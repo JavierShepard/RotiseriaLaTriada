@@ -1,9 +1,19 @@
-// models/Comanda.js
 const db = require('../config/db');
 
 const Comanda = {
+  // Obtener todas las comandas
+  getAll: (callback) => {
+    db.query('SELECT * FROM comandas', (err, results) => {
+      if (err) {
+        console.error("Error al obtener las comandas: ", err);
+        return callback(err, null);
+      }
+      callback(null, results);
+    });
+  },
+
   // Crear una nueva comanda
-  create: (comanda, callback) => {
+  create: (comanda) => {
     return new Promise((resolve, reject) => {
       db.query(
         'INSERT INTO comandas (precio_total, cotizacion_dolar) VALUES (?, ?)', 
