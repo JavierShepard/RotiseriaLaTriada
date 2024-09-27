@@ -29,9 +29,10 @@ exports.createProducto = (req, res) => {
 
   Producto.create(nuevoProducto, (err, result) => {
     if (err) return res.status(500).send(err);
-    res.status(201).send('Producto creado');
+    res.status(201).send('Producto creado exitosamente');
   });
 };
+
 
 // Actualizar un producto por ID
 exports.updateProducto = (req, res) => {
@@ -41,9 +42,10 @@ exports.updateProducto = (req, res) => {
   Producto.updateById(id, { nombre, stock, precio }, (err, result) => {
     if (err) return res.status(500).send(err);
     if (result.affectedRows === 0) return res.status(404).send('Producto no encontrado');
-    res.status(200).send('Producto actualizado');
+    res.status(200).send('Producto actualizado exitosamente');
   });
 };
+
 
 // Eliminar un producto por ID
 exports.deleteProducto = (req, res) => {
@@ -53,5 +55,14 @@ exports.deleteProducto = (req, res) => {
     if (err) return res.status(500).send(err);
     if (result.affectedRows === 0) return res.status(404).send('Producto no encontrado');
     res.status(200).send('Producto eliminado');
+  });
+};
+// Obtener un producto por ID
+exports.getProductoById = (req, res) => {
+  const { id } = req.params;
+  Producto.getById(id, (err, producto) => {
+    if (err) return res.status(500).send(err);
+    if (!producto) return res.status(404).send('Producto no encontrado');
+    res.json(producto);
   });
 };
