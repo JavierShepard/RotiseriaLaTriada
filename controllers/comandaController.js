@@ -2,7 +2,9 @@
 const Comanda = require('../models/Comanda');
 const Producto = require('../models/Producto');
 const axios = require('axios');
+
 require('dotenv').config();
+
 exports.getAllComandas = (req, res) => {
   Comanda.getAll((err, comandas) => {
     if (err) return res.status(500).send(err);
@@ -117,4 +119,25 @@ exports.deleteComanda = (req, res) => {
     if (result.affectedRows === 0) return res.status(404).send('Comanda no encontrada');
     res.status(200).send('Comanda eliminada');
   });
+};
+// Función que llama al endpoint /me y devuelve el usuario
+exports.getUsuario = async (req, res) => {
+  try {
+    const response = await axios.get('https://example.com/me', {
+      headers: {
+        'Authorization': `Bearer ${req.headers.authorization}`  // Tomando el token del request
+      }
+    });
+
+    if (response.status === 200) {
+      const usuario = response.data;  // Recibimos el objeto usuario
+      return res.json(usuario);  // Respondemos al cliente con el usuario
+    }
+  } catch (error) {
+    if (error.response && error.response.status === 401) {
+      return res.status(401).send('No autorizado. Verifica tu token.');
+    } else {
+      return res.status(500).send('Error al obtener el usuario: ' + error.message);
+    }
+  }
 };

@@ -40,5 +40,16 @@ const Comanda = {
     });
   }
 };
+// Obtener una comanda por ID
+Comanda.getById = (id, callback) => {
+  db.query('SELECT * FROM comandas WHERE id = ?', [id], (err, results) => {
+    if (err) {
+      console.error('Error al obtener la comanda con ID:', err);
+      return callback(err, null);
+    }
+    if (results.length === 0) return callback(null, null);  // No se encontró la comanda
+    callback(null, results[0]);  // Retorna la comanda encontrada
+  });
+};
 
 module.exports = Comanda;
