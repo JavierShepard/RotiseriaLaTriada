@@ -51,5 +51,15 @@ Comanda.getById = (id, callback) => {
     callback(null, results[0]);  // Retorna la comanda encontrada
   });
 };
+// Actualizar una comanda por ID
+Comanda.updateById = (id, actualizacion, callback) => {
+  db.query('UPDATE comandas SET ? WHERE id = ?', [actualizacion, id], (err, result) => {
+    if (err) {
+      console.error('Error al actualizar la comanda:', err);
+      return callback(err, null);
+    }
+    callback(null, result);
+  });
+};
 
 module.exports = Comanda;
