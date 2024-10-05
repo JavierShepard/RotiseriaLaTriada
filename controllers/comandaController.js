@@ -11,6 +11,15 @@ exports.getAllComandas = (req, res) => {
     res.json(comandas);
   });
 };
+// Añadir este método si no está definido
+exports.getComandaById = (req, res) => {
+  const { id } = req.params;
+  Comanda.getById(id, (err, comanda) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!comanda) return res.status(404).json({ error: 'Comanda no encontrada' });
+    res.json(comanda);
+  });
+};
 
 // Crear una nueva comanda con múltiples productos
 exports.createComanda = async (req, res) => {

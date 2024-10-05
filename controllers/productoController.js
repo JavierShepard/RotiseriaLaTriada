@@ -6,6 +6,15 @@ exports.getAllProductos = (req, res) => {
     res.json(productos);
   });
 };
+// Añadir este método si no está definido
+exports.getProductoById = (req, res) => {
+  const { id } = req.params;
+  Producto.getById(id, (err, producto) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+    res.json(producto);
+  });
+};
 
 // Crear un nuevo producto
 exports.createProducto = (req, res) => {
