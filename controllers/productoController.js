@@ -1,20 +1,9 @@
 const Producto = require('../models/Producto');
 
-// Obtener todos los productos
 exports.getAllProductos = (req, res) => {
   Producto.getAll((err, productos) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(productos);
-  });
-};
-
-// Obtener un producto por ID
-exports.getProductoById = (req, res) => {
-  const { id } = req.params;
-  Producto.getById(id, (err, producto) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!producto.length) return res.status(404).json({ error: 'Producto no encontrado' });
-    res.json(producto[0]);
   });
 };
 
@@ -33,24 +22,53 @@ exports.createProducto = (req, res) => {
 };
 
 // Actualizar un producto por ID
-exports.updateProducto = (req, res) => {
+exports.updateProducto = async (req, res) => {
   const { id } = req.params;
   const { nombre, stock, precio } = req.body;
+  const token = req.headers.authorization?.split(' ')[1];  // Recuperar el token
 
-  Producto.updateById(id, { nombre, stock, precio }, (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Producto no encontrado' });
-    res.status(200).json({ message: 'Producto actualizado exitosamente' });
-  });
+  try {
+    const response = await axios.put(
+      `https://rotiserialatriada.onrender.com/api/productos/${id}`,
+      { nombre, stock, precio },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`  // Pasar el token
+        }
+      }
+    );
+
+    if (response.status === 200) {
+      res.status(200).json({ message: 'Producto actualizado exitosamente' });
+    } else {
+      res.status(404).json({ error: 'Producto no encontrado' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Eliminar un producto por ID
-exports.deleteProducto = (req, res) => {
+exports.deleteProducto = async (req, res) => {
   const { id } = req.params;
+  const token = req.headers.authorization?.split(' ')[1];  // Recuperar el token
 
-  Producto.deleteById(id, (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Producto no encontrado' });
-    res.status(200).json({ message: 'Producto eliminado' });
-  });
+  try {
+    const response = await axios.delete(
+      `https://rotiserialatriada.onrender.com/api/productos/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`  // Pasar el token
+        }
+      }
+    );
+
+    if (response.status === 204) {
+      res.status(200).json({ message: 'Producto eliminado' });
+    } else {
+      res.status(404).json({ error: 'Producto no encontrado' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
