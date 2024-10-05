@@ -11,7 +11,7 @@ const authMiddleware = async (req, res, next) => {
 
   try {
     // Enviar el token para validarlo con la API de autenticación
-    const response = await axios.get('https://app-98731bcf-e8fd-4bae-a6be-2b869e095968.cleverapps.io/me', {
+    const response = await axios.get('https://taller6-alejo.onrender.com/me', {
       headers: {
         Authorization: `Bearer ${token}`,  // Incluir el token en el encabezado
       },
