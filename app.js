@@ -10,17 +10,10 @@ require('dotenv').config();
 const allowedOrigins = ['http://localhost:5174', 'http://localhost:5173', 'https://rotiserialatriada.onrender.com'];
 
 // Configuración del middleware CORS dinámico
-app.use(cors((req, callback) => {
-  let corsOptions;
-  let origin = req.header('Origin'); // Obtiene el origen de la solicitud
-
-  // Verifica si el origen de la solicitud está en la lista de orígenes permitidos
-  if (allowedOrigins.includes(origin)) {
-    corsOptions = { origin: true }; // Permite este origen
-  } else {
-    corsOptions = { origin: false }; // Bloquea otros orígenes
-  }
-  callback(null, corsOptions); // Devuelve la configuración de CORS
+app.use(cors({
+  origin: '*',  // Permitir todos los orígenes temporalmente
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Configurar Helmet con una política CSP personalizada
