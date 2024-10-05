@@ -107,7 +107,13 @@ exports.updateComanda = async (req, res) => {
       },
     });
 
-    const updatedComanda = await Comanda.updateById(id, actualizacion);
+    const updatedComanda = await new Promise((resolve, reject) => {
+      Comanda.updateById(id, actualizacion, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    });
+
     if (!updatedComanda) {
       return res.status(404).json({ error: 'Comanda no encontrada' });
     }
