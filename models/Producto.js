@@ -36,7 +36,22 @@ const Producto = {
       callback(null, result);
     });
   },
-
+  // Método para actualizar el stock de un producto
+  updateStock: (id, cantidad) => {
+    return new Promise((resolve, reject) => {
+      db.query(
+        'UPDATE productos SET stock = stock - ? WHERE id = ? AND stock >= ?', 
+        [cantidad, id, cantidad],
+        (err, result) => {
+          if (err) return reject(err);
+          if (result.affectedRows === 0) {
+            return reject(new Error(`Stock insuficiente para el producto con ID ${id}`));
+          }
+          resolve(result);
+        }
+      );
+    });
+  },
   deleteById: (id, callback) => {
     db.query('DELETE FROM productos WHERE id = ?', [id], (err, result) => {
       if (err) return callback(err, null);
