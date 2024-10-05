@@ -1,5 +1,5 @@
 const Producto = require('../models/Producto');
-
+const axios = require('axios');
 exports.getAllProductos = (req, res) => {
   Producto.getAll((err, productos) => {
     if (err) return res.status(500).json({ error: err.message });
