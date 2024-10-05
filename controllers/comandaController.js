@@ -21,7 +21,6 @@ exports.getComandaById = (req, res) => {
   });
 };
 
-// Crear una nueva comanda con múltiples productos
 exports.createComanda = async (req, res) => {
   const { productos } = req.body;
 

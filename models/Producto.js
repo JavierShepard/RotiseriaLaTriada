@@ -1,18 +1,23 @@
 const db = require('../config/db');
 
 const Producto = {
-  getAll: (callback) => {
-    db.query('SELECT * FROM productos', (err, results) => {
-      if (err) return callback(err, null);
-      callback(null, results);
-    });
-  },
-  
+  // Obtener un producto por ID (con promesa)
   getById: (id, callback) => {
     db.query('SELECT * FROM productos WHERE id = ?', [id], (err, results) => {
       if (err) return callback(err, null);
-      if (!results.length) return callback(null, null);
+      if (results.length === 0) return callback(null, null);
       callback(null, results[0]);
+    });
+  },
+
+  // Obtener un producto por ID usando promesas
+  getByIdPromise: (id) => {
+    return new Promise((resolve, reject) => {
+      db.query('SELECT * FROM productos WHERE id = ?', [id], (err, results) => {
+        if (err) return reject(err);
+        if (results.length === 0) return resolve(null);
+        resolve(results[0]);
+      });
     });
   },
 
