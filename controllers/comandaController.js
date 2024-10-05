@@ -29,19 +29,28 @@ exports.createComanda = async (req, res) => {
     return res.status(400).send('Debes agregar al menos un producto');
   }
 
-  try {
-    const token = req.headers.authorization?.split(' ')[1];  // Recuperar el token
+  const token = req.headers.authorization?.split(' ')[1]; // Recuperar el token
+  if (!token) {
+    return res.status(401).send('Token de autorización faltante.');
+  }
 
-    // Obtener cotización del dólar desde una API externa
+  try {
+    // Validar el token
+    await axios.get('https://taller6-alejo.onrender.com/me', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // Obtener cotización del dólar
     const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
     const cotizacionDolar = response.data.rates.ARS;
 
     let precioTotal = 0;
-
     const productosProcesados = await Promise.all(productos.map(async (item) => {
       const { id_producto, cantidad } = item;
-
       const producto = await Producto.getByIdPromise(id_producto);
+
       if (!producto) {
         throw new Error(`Producto con id ${id_producto} no encontrado`);
       }
@@ -58,7 +67,7 @@ exports.createComanda = async (req, res) => {
 
     const nuevaComanda = {
       precio_total: precioTotal,
-      cotizacion_dolar: cotizacionDolar
+      cotizacion_dolar: cotizacionDolar,
     };
 
     const comandaId = await Comanda.create(nuevaComanda);
@@ -68,7 +77,7 @@ exports.createComanda = async (req, res) => {
         id_comanda: comandaId,
         id_producto: producto.id_producto,
         cantidad: producto.cantidad,
-        subtotal: producto.subtotal
+        subtotal: producto.subtotal,
       });
 
       await Producto.updateStock(producto.id_producto, producto.cantidad);
@@ -80,22 +89,32 @@ exports.createComanda = async (req, res) => {
   }
 };
 
-// Actualizar una comanda por ID
+
 exports.updateComanda = async (req, res) => {
   const { id } = req.params;
   const actualizacion = req.body;
-  const token = req.headers.authorization?.split(' ')[1];  // Recuperar el token
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).send('Token de autorización faltante.');
+  }
 
   try {
-    // Hacer la solicitud PUT a la API para actualizar la comanda
+    // Validar el token
+    await axios.get('https://taller6-alejo.onrender.com/me', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
     const response = await axios.put(
       `https://rotiserialatriada.onrender.com/api/comandas/${id}`,
       actualizacion,
       {
         headers: {
-          Authorization: `Bearer ${token}`,   // Pasar el token
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       }
     );
     res.status(200).json(response.data);
@@ -104,18 +123,29 @@ exports.updateComanda = async (req, res) => {
   }
 };
 
-// Eliminar una comanda por ID
+
 exports.deleteComanda = async (req, res) => {
   const { id } = req.params;
-  const token = req.headers.authorization?.split(' ')[1];  // Recuperar el token
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).send('Token de autorización faltante.');
+  }
 
   try {
+    // Validar el token
+    await axios.get('https://taller6-alejo.onrender.com/me', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
     const response = await axios.delete(
       `https://rotiserialatriada.onrender.com/api/comandas/${id}`,
       {
         headers: {
-          Authorization: `Bearer ${token}`  // Pasar el token
-        }
+          Authorization: `Bearer ${token}`,
+        },
       }
     );
 
@@ -128,6 +158,7 @@ exports.deleteComanda = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // Función que llama al endpoint /me y devuelve el usuario
 exports.getUsuario = async (req, res) => {
