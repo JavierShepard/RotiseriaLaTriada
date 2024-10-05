@@ -64,7 +64,22 @@ const Comanda = {
       if (results.length === 0) return callback(null, null);  // No se encontró la comanda
       callback(null, results[0]);  // Retorna la comanda encontrada
     });
+  },
+
+  // Eliminar una comanda por ID
+  deleteById: (id, callback) => {
+    db.query('DELETE FROM comandas WHERE id = ?', [id], (err, result) => {
+      if (err) {
+        console.error('Error al eliminar la comanda:', err);
+        return callback(err, null);
+      }
+      if (result.affectedRows === 0) {
+        return callback(null, null);  // No se encontró la comanda
+      }
+      callback(null, result);
+    });
   }
 };
 
 module.exports = Comanda;
+    
