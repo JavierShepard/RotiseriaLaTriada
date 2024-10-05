@@ -2,9 +2,17 @@
 const express = require('express');
 const helmet = require('helmet');
 const app = express();
+const cors = require('cors');
+
 const productoRoutes = require('./routes/productoRoutes');
 const comandaRoutes = require('./routes/comandaRoutes');
 require('dotenv').config();
+// Configuración del middleware CORS
+app.use(cors({
+  origin: 'http://localhost:5174',  // Permite solicitudes desde el frontend
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 // Configurar Helmet con una política CSP personalizada
 app.use(helmet({
   contentSecurityPolicy: {

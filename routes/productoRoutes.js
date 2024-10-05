@@ -1,4 +1,3 @@
-// routes/productoRoutes.js
 const express = require('express');
 const router = express.Router();
 const productoController = require('../controllers/productoController');
@@ -10,7 +9,7 @@ router.put('/productos/:id', authMiddleware, productoController.updateProducto);
 router.delete('/productos/:id', authMiddleware, productoController.deleteProducto);  // Eliminar un producto por ID
 
 // Rutas públicas
-router.get('/productos', productoController.getAllProductos); // Obtener todos los productos
-router.get('/productos/:id', productoController.getProductoById); // Obtener un producto por ID
+router.get('/productos', productoController.getAllProductos);  // Obtener todos los productos
+router.get('/productos/:id', productoController.getProductoById);  // Obtener un producto por ID
 
 module.exports = router;
