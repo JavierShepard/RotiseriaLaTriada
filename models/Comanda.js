@@ -38,54 +38,32 @@ const Comanda = {
         }
       );
     });
-  }
-};
-// Obtener una comanda por ID
-Comanda.getById = (id, callback) => {
-  db.query('SELECT * FROM comandas WHERE id = ?', [id], (err, results) => {
-    if (err) {
-      console.error('Error al obtener la comanda con ID:', err);
-      return callback(err, null);
-    }
-    if (results.length === 0) return callback(null, null);  // No se encontró la comanda
-    callback(null, results[0]);  // Retorna la comanda encontrada
-  });
-};
-exports.updateComanda = async (req, res) => {
-  const { id } = req.params;
-  const actualizacion = req.body;
-  const token = req.headers.authorization?.split(' ')[1];
+  },
 
-  if (!token) {
-    return res.status(401).send('Token de autorización faltante.');
-  }
-
-  try {
-    // Validar el token
-    await axios.get('https://taller6-alejo.onrender.com/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  // Actualizar una comanda por ID
+  updateById: (id, actualizacion, callback) => {
+    db.query('UPDATE comandas SET ? WHERE id = ?', [actualizacion, id], (err, result) => {
+      if (err) {
+        console.error('Error al actualizar la comanda:', err);
+        return callback(err, null);
+      }
+      if (result.affectedRows === 0) {
+        return callback(null, null);  // No se encontró la comanda
+      }
+      callback(null, result);
     });
+  },
 
-    const updatedComanda = await new Promise((resolve, reject) => {
-      Comanda.updateById(id, actualizacion, (err, result) => {
-        if (err) return reject(err);
-        resolve(result);
-      });
+  // Obtener una comanda por ID
+  getById: (id, callback) => {
+    db.query('SELECT * FROM comandas WHERE id = ?', [id], (err, results) => {
+      if (err) {
+        console.error('Error al obtener la comanda con ID:', err);
+        return callback(err, null);
+      }
+      if (results.length === 0) return callback(null, null);  // No se encontró la comanda
+      callback(null, results[0]);  // Retorna la comanda encontrada
     });
-
-    if (!updatedComanda) {
-      return res.status(404).json({ error: 'Comanda no encontrada' });
-    }
-
-    res.status(200).json({ message: 'Comanda actualizada exitosamente' });
-  } catch (error) {
-    console.error('Error en updateComanda:', error);
-    if (error.response) {
-      return res.status(error.response.status).json({ error: error.response.data });
-    }
-    res.status(500).json({ error: 'Error al actualizar la comanda: ' + error.message });
   }
 };
 
