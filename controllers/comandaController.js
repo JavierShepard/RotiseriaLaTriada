@@ -107,19 +107,18 @@ exports.updateComanda = async (req, res) => {
       },
     });
 
-    const response = await axios.put(
-      `https://rotiserialatriada.onrender.com/api/comandas/${id}`,
-      actualizacion,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-    res.status(200).json(response.data);
+    const updatedComanda = await Comanda.updateById(id, actualizacion);
+    if (!updatedComanda) {
+      return res.status(404).json({ error: 'Comanda no encontrada' });
+    }
+
+    res.status(200).json({ message: 'Comanda actualizada exitosamente' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error en updateComanda:', error);
+    if (error.response) {
+      return res.status(error.response.status).json({ error: error.response.data });
+    }
+    res.status(500).json({ error: 'Error al actualizar la comanda: ' + error.message });
   }
 };
 
