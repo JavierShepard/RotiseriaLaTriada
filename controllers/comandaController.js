@@ -136,7 +136,7 @@ exports.deleteComanda = (req, res) => {
 // Función que llama al endpoint /me y devuelve el usuario
 exports.getUsuario = async (req, res) => {
   try {
-    const response = await axios.get('https://example.com/me', {
+    const response = await axios.get('https://https://taller6-alejo.onrender.com/me', {
       headers: {
         'Authorization': `Bearer ${req.headers.authorization}`  // Tomando el token del request
       }
