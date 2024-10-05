@@ -11,7 +11,7 @@ exports.getAllComandas = (req, res) => {
     res.json(comandas);
   });
 };
-// Añadir este método si no está definido
+
 exports.getComandaById = (req, res) => {
   const { id } = req.params;
   Comanda.getById(id, (err, comanda) => {
@@ -29,7 +29,7 @@ exports.createComanda = async (req, res) => {
     return res.status(400).send('Debes agregar al menos un producto');
   }
 
-  const token = req.headers.authorization?.split(' ')[1]; // Recuperar el token
+  const token = req.headers.authorization?.split(' ')[1];
   if (!token) {
     return res.status(401).send('Token de autorización faltante.');
   }
@@ -89,7 +89,6 @@ exports.createComanda = async (req, res) => {
   }
 };
 
-
 exports.updateComanda = async (req, res) => {
   const { id } = req.params;
   const actualizacion = req.body;
@@ -128,7 +127,6 @@ exports.updateComanda = async (req, res) => {
   }
 };
 
-
 exports.deleteComanda = async (req, res) => {
   const { id } = req.params;
   const token = req.headers.authorization?.split(' ')[1];
@@ -145,30 +143,28 @@ exports.deleteComanda = async (req, res) => {
       },
     });
 
-    const response = await axios.delete(
-      `https://rotiserialatriada.onrender.com/api/comandas/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const deletedComanda = await new Promise((resolve, reject) => {
+      Comanda.deleteById(id, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    });
 
-    if (response.status === 204) {
-      res.status(200).send('Comanda eliminada');
-    } else {
-      res.status(404).send('Comanda no encontrada');
+    if (!deletedComanda) {
+      return res.status(404).json({ error: 'Comanda no encontrada' });
     }
+
+    res.status(200).send('Comanda eliminada');
   } catch (error) {
+    console.error('Error en deleteComanda:', error);
     res.status(500).json({ error: error.message });
   }
 };
 
-
 // Función que llama al endpoint /me y devuelve el usuario
 exports.getUsuario = async (req, res) => {
   try {
-    const response = await axios.get('https://https://taller6-alejo.onrender.com/me', {
+    const response = await axios.get('https://taller6-alejo.onrender.com/me', {
       headers: {
         'Authorization': `Bearer ${req.headers.authorization?.split(' ')[1]}`  // Recuperar el token
       }
@@ -185,4 +181,3 @@ exports.getUsuario = async (req, res) => {
     }
   }
 };
-
