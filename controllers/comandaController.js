@@ -101,14 +101,27 @@ exports.getComandaById = (req, res) => {
 };
 
 // Actualizar una comanda por ID
-exports.updateComanda = (req, res) => {
+exports.updateComanda = async (req, res) => {
   const { id } = req.params;
   const actualizacion = req.body;
-  Comanda.updateById(id, actualizacion, (err, result) => {
-    if (err) return res.status(500).send(err);
-    if (result.affectedRows === 0) return res.status(404).send('Comanda no encontrada');
-    res.status(200).send('Comanda actualizada');
-  });
+  const token = req.headers.authorization?.split(' ')[1];  // Tomar el token de los headers
+
+  try {
+    // Hacer la solicitud PUT a la API para actualizar la comanda
+    const response = await axios.put(
+      `https://rotiserialatriada.onrender.com/api/comandas/${id}`,
+      actualizacion,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,   // Pasar el token
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    res.status(200).json(response.data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Eliminar una comanda por ID
