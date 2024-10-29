@@ -1,68 +1,69 @@
-// controllers/comandaController.js
 const Comanda = require('../models/Comanda');
 const Producto = require('../models/Producto');
 const axios = require('axios');
-
 require('dotenv').config();
 
-exports.getAllComandas = (req, res) => {
-  Comanda.getAll((err, comandas) => {
-    if (err) return res.status(500).send(err);
-    res.json(comandas);
-  });
-};
-
-exports.getComandaById = (req, res) => {
-  const { id } = req.params;
-  Comanda.getById(id, (err, comanda) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!comanda) return res.status(404).json({ error: 'Comanda no encontrada' });
-    res.json(comanda);
-  });
-};
-
-exports.createComanda = async (req, res) => {
-  const { productos } = req.body;
-
-  if (!productos || productos.length === 0) {
-    return res.status(400).send('Debes agregar al menos un producto');
-  }
-
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).send('Token de autorización faltante.');
+// Función para validar el token usando dos endpoints
+async function validarToken(token) {
+  try {
+    // Intento de validación con el primer endpoint
+    const response = await axios.get('https://taller6-alejo.onrender.com/usuarios/1', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (response.status === 200) return true; // Token válido con el primer endpoint
+  } catch (error) {
+    console.error('Token no válido en el primer endpoint:', error.message);
   }
 
   try {
-    // Validar el token
+    // Intento de validación con el segundo endpoint si el primero falla
     await axios.get('https://taller6-alejo.onrender.com/me', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
+    return true; // Token válido con el segundo endpoint
+  } catch (error) {
+    console.error('Token no válido en el segundo endpoint:', error.message);
+  }
 
+  return false; // Token no válido en ambos endpoints
+}
+
+exports.createComanda = async (req, res) => {
+  const { productos } = req.body;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) return res.status(401).send('Token de autorización faltante.');
+
+  // Validación del token
+  const tokenValido = await validarToken(token);
+  if (!tokenValido) return res.status(401).send('No autorizado. Token inválido.');
+
+  if (!productos || productos.length === 0) return res.status(400).send('Debes agregar al menos un producto');
+
+  try {
     // Obtener cotización del dólar
     const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
     const cotizacionDolar = response.data.rates.ARS;
 
     let precioTotal = 0;
-    const productosProcesados = await Promise.all(productos.map(async (item) => {
-      const { id_producto, cantidad } = item;
-      const producto = await Producto.getByIdPromise(id_producto);
+    const productosProcesados = await Promise.all(
+      productos.map(async (item) => {
+        const { id_producto, cantidad } = item;
+        const producto = await Producto.getByIdPromise(id_producto);
 
-      if (!producto) {
-        throw new Error(`Producto con id ${id_producto} no encontrado`);
-      }
+        if (!producto) throw new Error(`Producto con id ${id_producto} no encontrado`);
+        if (producto.stock < cantidad) throw new Error(`Stock insuficiente para el producto ${producto.nombre}`);
 
-      if (producto.stock < cantidad) {
-        throw new Error(`Stock insuficiente para el producto ${producto.nombre}`);
-      }
+        const subtotal = producto.precio * cantidad * cotizacionDolar;
+        precioTotal += subtotal;
 
-      const subtotal = producto.precio * cantidad * cotizacionDolar;
-      precioTotal += subtotal;
-
-      return { id_producto, cantidad, subtotal };
-    }));
+        return { id_producto, cantidad, subtotal };
+      })
+    );
 
     const nuevaComanda = {
       precio_total: precioTotal,
@@ -71,16 +72,17 @@ exports.createComanda = async (req, res) => {
 
     const comandaId = await Comanda.create(nuevaComanda);
 
-    await Promise.all(productosProcesados.map(async (producto) => {
-      await Comanda.addProductoToComanda({
-        id_comanda: comandaId,
-        id_producto: producto.id_producto,
-        cantidad: producto.cantidad,
-        subtotal: producto.subtotal,
-      });
-
-      await Producto.updateStock(producto.id_producto, producto.cantidad);
-    }));
+    await Promise.all(
+      productosProcesados.map(async (producto) => {
+        await Comanda.addProductoToComanda({
+          id_comanda: comandaId,
+          id_producto: producto.id_producto,
+          cantidad: producto.cantidad,
+          subtotal: producto.subtotal,
+        });
+        await Producto.updateStock(producto.id_producto, producto.cantidad);
+      })
+    );
 
     res.status(201).send('Comanda creada exitosamente con múltiples productos');
   } catch (error) {
@@ -93,18 +95,12 @@ exports.updateComanda = async (req, res) => {
   const actualizacion = req.body;
   const token = req.headers.authorization?.split(' ')[1];
 
-  if (!token) {
-    return res.status(401).send('Token de autorización faltante.');
-  }
+  if (!token) return res.status(401).send('Token de autorización faltante.');
+
+  const tokenValido = await validarToken(token);
+  if (!tokenValido) return res.status(401).send('No autorizado. Token inválido.');
 
   try {
-    // Validar el token
-    await axios.get('https://taller6-alejo.onrender.com/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
     const updatedComanda = await new Promise((resolve, reject) => {
       Comanda.updateById(id, actualizacion, (err, result) => {
         if (err) return reject(err);
@@ -112,16 +108,10 @@ exports.updateComanda = async (req, res) => {
       });
     });
 
-    if (!updatedComanda) {
-      return res.status(404).json({ error: 'Comanda no encontrada' });
-    }
+    if (!updatedComanda) return res.status(404).json({ error: 'Comanda no encontrada' });
 
     res.status(200).json({ message: 'Comanda actualizada exitosamente' });
   } catch (error) {
-    console.error('Error en updateComanda:', error);
-    if (error.response) {
-      return res.status(error.response.status).json({ error: error.response.data });
-    }
     res.status(500).json({ error: 'Error al actualizar la comanda: ' + error.message });
   }
 };
@@ -130,18 +120,12 @@ exports.deleteComanda = async (req, res) => {
   const { id } = req.params;
   const token = req.headers.authorization?.split(' ')[1];
 
-  if (!token) {
-    return res.status(401).send('Token de autorización faltante.');
-  }
+  if (!token) return res.status(401).send('Token de autorización faltante.');
+
+  const tokenValido = await validarToken(token);
+  if (!tokenValido) return res.status(401).send('No autorizado. Token inválido.');
 
   try {
-    // Validar el token
-    await axios.get('https://taller6-alejo.onrender.com/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
     const deletedComanda = await new Promise((resolve, reject) => {
       Comanda.deleteById(id, (err, result) => {
         if (err) return reject(err);
@@ -149,34 +133,10 @@ exports.deleteComanda = async (req, res) => {
       });
     });
 
-    if (!deletedComanda) {
-      return res.status(404).json({ error: 'Comanda no encontrada' });
-    }
+    if (!deletedComanda) return res.status(404).json({ error: 'Comanda no encontrada' });
 
     res.status(200).send('Comanda eliminada');
   } catch (error) {
-    console.error('Error en deleteComanda:', error);
     res.status(500).json({ error: error.message });
-  }
-};
-
-// Función que llama al endpoint /me y devuelve el usuario
-exports.getUsuario = async (req, res) => {
-  try {
-    const response = await axios.get('https://taller6-alejo.onrender.com/me', {
-      headers: {
-        'Authorization': `Bearer ${req.headers.authorization?.split(' ')[1]}`  // Recuperar el token
-      }
-    });
-
-    if (response.status === 200) {
-      return res.json(response.data);
-    }
-  } catch (error) {
-    if (error.response && error.response.status === 401) {
-      return res.status(401).send('No autorizado. Verifica tu token.');
-    } else {
-      return res.status(500).send('Error al obtener el usuario: ' + error.message);
-    }
   }
 };
