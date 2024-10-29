@@ -134,6 +134,8 @@ const deleteComanda = async (req, res) => {
 
 // Exportamos todas las funciones de controlador
 module.exports = {
+  getAllComandas,
+  getComandaById,
   createComanda,
   updateComanda,
   deleteComanda,
