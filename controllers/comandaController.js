@@ -25,6 +25,21 @@ async function validarToken(token) {
 
   return false;
 }
+exports.getAllComandas = (req, res) => {
+  Comanda.getAll((err, comandas) => {
+    if (err) return res.status(500).send(err);
+    res.json(comandas);
+  });
+};
+
+exports.getComandaById = (req, res) => {
+  const { id } = req.params;
+  Comanda.getById(id, (err, comanda) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!comanda) return res.status(404).json({ error: 'Comanda no encontrada' });
+    res.json(comanda);
+  });
+};
 
 const createComanda = async (req, res) => {
   const { productos } = req.body;
@@ -132,11 +147,3 @@ const deleteComanda = async (req, res) => {
   }
 };
 
-// Exportamos todas las funciones de controlador
-module.exports = {
-  getAllComandas,
-  getComandaById,
-  createComanda,
-  updateComanda,
-  deleteComanda,
-};
