@@ -1,51 +1,42 @@
+// controllers/comandaController.js
 const Comanda = require('../models/Comanda');
 const Producto = require('../models/Producto');
 const axios = require('axios');
 require('dotenv').config();
 
-// Función para validar el token usando dos endpoints
 async function validarToken(token) {
   try {
-    // Intento de validación con el primer endpoint
     const response = await axios.get('https://taller6-alejo.onrender.com/usuarios/1', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
-    if (response.status === 200) return true; // Token válido con el primer endpoint
+    if (response.status === 200) return true;
   } catch (error) {
     console.error('Token no válido en el primer endpoint:', error.message);
   }
 
   try {
-    // Intento de validación con el segundo endpoint si el primero falla
     await axios.get('https://taller6-alejo.onrender.com/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
-    return true; // Token válido con el segundo endpoint
+    return true;
   } catch (error) {
     console.error('Token no válido en el segundo endpoint:', error.message);
   }
 
-  return false; // Token no válido en ambos endpoints
+  return false;
 }
 
-exports.createComanda = async (req, res) => {
+const createComanda = async (req, res) => {
   const { productos } = req.body;
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) return res.status(401).send('Token de autorización faltante.');
-
-  // Validación del token
   const tokenValido = await validarToken(token);
   if (!tokenValido) return res.status(401).send('No autorizado. Token inválido.');
 
   if (!productos || productos.length === 0) return res.status(400).send('Debes agregar al menos un producto');
 
   try {
-    // Obtener cotización del dólar
     const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
     const cotizacionDolar = response.data.rates.ARS;
 
@@ -90,7 +81,7 @@ exports.createComanda = async (req, res) => {
   }
 };
 
-exports.updateComanda = async (req, res) => {
+const updateComanda = async (req, res) => {
   const { id } = req.params;
   const actualizacion = req.body;
   const token = req.headers.authorization?.split(' ')[1];
@@ -116,7 +107,7 @@ exports.updateComanda = async (req, res) => {
   }
 };
 
-exports.deleteComanda = async (req, res) => {
+const deleteComanda = async (req, res) => {
   const { id } = req.params;
   const token = req.headers.authorization?.split(' ')[1];
 
@@ -139,4 +130,11 @@ exports.deleteComanda = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+};
+
+// Exportamos todas las funciones de controlador
+module.exports = {
+  createComanda,
+  updateComanda,
+  deleteComanda,
 };
