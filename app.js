@@ -4,6 +4,8 @@ const cors = require('cors');
 const app = express();
 const productoRoutes = require('./routes/productoRoutes');
 const comandaRoutes = require('./routes/comandaRoutes');
+const comandaProductosRoutes = require('./routes/comandaProductosRoutes');
+
 require('dotenv').config();
 
 // Lista de orígenes permitidos
@@ -33,6 +35,7 @@ app.use(express.json());
 // Rutas
 app.use('/api', productoRoutes);
 app.use('/api', comandaRoutes);
+app.use('/api/comanda_productos', comandaProductosRoutes);
 
 // Inicialización del servidor
 const PORT = process.env.PORT || 3000;
