@@ -1,4 +1,14 @@
 const ComandaProducto = require('../models/ComandaProducto');
+exports.getProductosByComandaId = (req, res) => {
+  const { id_comanda } = req.params;
+
+  ComandaProducto.getByComandaId(id_comanda, (err, productos) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!productos || productos.length === 0) return res.status(404).json({ error: 'No se encontraron productos para esta comanda' });
+    
+    res.json(productos);
+  });
+};
 
 // Obtener todos los registros de comanda_productos
 exports.getAllComandaProductos = (req, res) => {
@@ -48,5 +58,16 @@ exports.deleteComandaProducto = (req, res) => {
     if (err) return res.status(500).json({ error: err.message });
     if (result.affectedRows === 0) return res.status(404).json({ error: 'Registro no encontrado' });
     res.status(200).json({ message: 'Registro eliminado exitosamente' });
+  });
+};
+// Obtener productos por id_comanda
+exports.getProductosByComandaId = (req, res) => {
+  const { id_comanda } = req.params;
+
+  ComandaProducto.getByComandaId(id_comanda, (err, productos) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!productos || productos.length === 0) return res.status(404).json({ error: 'No se encontraron productos para esta comanda' });
+    
+    res.json(productos);
   });
 };

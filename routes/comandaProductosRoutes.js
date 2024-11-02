@@ -7,5 +7,6 @@ router.get('/:id', comandaProductosController.getComandaProductoById);
 router.post('/', comandaProductosController.createComandaProducto);
 router.put('/:id', comandaProductosController.updateComandaProducto);
 router.delete('/:id', comandaProductosController.deleteComandaProducto);
+router.get('/comanda/:id_comanda', comandaProductosController.getProductosByComandaId);
 
 module.exports = router;
