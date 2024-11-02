@@ -4,9 +4,8 @@ const ComandaProducto = {
   // Obtener todos los registros de comanda_productos
   getAll: (callback) => {
     db.query(
-      `SELECT cp.*, p.nombre AS producto_nombre
-       FROM comanda_productos cp
-       JOIN productos p ON cp.id_producto = p.id`,
+      `SELECT *
+       FROM comanda_productos`,
       (err, results) => {
         if (err) return callback(err, null);
         callback(null, results);
