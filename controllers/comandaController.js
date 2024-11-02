@@ -47,7 +47,7 @@ async function validarToken(token) {
 
   return false; // Token no válido en ambos endpoints
 }
-/*
+
 exports.createComanda = async (req, res) => {
   const { productos } = req.body;
   const token = req.headers.authorization?.split(' ')[1];
@@ -104,8 +104,8 @@ exports.createComanda = async (req, res) => {
     res.status(500).send('Error al crear la comanda: ' + error.message);
   }
 };
-*/
-exports.createComanda = async (req, res) => {
+
+/*exports.createComanda = async (req, res) => {
   const { productos } = req.body;
   const token = req.headers.authorization?.split(' ')[1];
 
@@ -160,7 +160,7 @@ exports.createComanda = async (req, res) => {
   } catch (error) {
     res.status(500).send('Error al crear la comanda: ' + error.message);
   }
-};
+};*/
 
 exports.updateComanda = async (req, res) => {
   const { id } = req.params;
