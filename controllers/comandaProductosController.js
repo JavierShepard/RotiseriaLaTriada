@@ -1,4 +1,5 @@
 const ComandaProducto = require('../models/ComandaProducto');
+// Obtener productos de una comanda específica por su id_comanda
 exports.getProductosByComandaId = (req, res) => {
   const { id_comanda } = req.params;
 
@@ -18,7 +19,7 @@ exports.getAllComandaProductos = (req, res) => {
   });
 };
 
-// Obtener un registro específico de comanda_productos
+/* Obtener un registro específico de comanda_productos
 exports.getComandaProductoById = (req, res) => {
   const { id } = req.params;
   ComandaProducto.getById(id, (err, registro) => {
@@ -26,7 +27,7 @@ exports.getComandaProductoById = (req, res) => {
     if (!registro) return res.status(404).json({ error: 'Registro no encontrado' });
     res.json(registro);
   });
-};
+};*/
 
 // Crear un nuevo registro en comanda_productos
 exports.createComandaProducto = (req, res) => {

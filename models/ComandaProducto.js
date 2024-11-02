@@ -4,14 +4,14 @@ const ComandaProducto = {
   // Obtener todos los registros de comanda_productos
   getAll: (callback) => {
     db.query(
-      `SELECT *
-       FROM comanda_productos`,
+      `SELECT * FROM comanda_productos`,
       (err, results) => {
         if (err) return callback(err, null);
         callback(null, results);
       }
     );
   },
+
   // Obtener todos los registros de comanda_productos por id_comanda
   getByComandaId: (id_comanda, callback) => {
     db.query(
@@ -26,7 +26,7 @@ const ComandaProducto = {
       }
     );
   },
-  
+
   // Crear un nuevo registro en comanda_productos
   create: (detalleComanda, callback) => {
     db.query(
