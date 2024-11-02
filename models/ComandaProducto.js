@@ -39,7 +39,7 @@ const ComandaProducto = {
     );
   },
 
-  // Obtener un registro específico de comanda_productos por ID
+  /* Obtener un registro específico de comanda_productos por ID
   getById: (id, callback) => {
     db.query(
       `SELECT cp.*, p.nombre AS producto_nombre
@@ -53,7 +53,7 @@ const ComandaProducto = {
         callback(null, results[0]);
       }
     );
-  },
+  },*/
 
   // Actualizar un registro en comanda_productos por ID
   updateById: (id, detalleComanda, callback) => {

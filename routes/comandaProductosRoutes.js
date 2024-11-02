@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const comandaProductosController = require('../controllers/comandaProductosController');
 // Ruta para obtener todos los productos de una comanda específica por id_comanda
-router.get('/comanda_productos/:id_comanda', comandaProductosController.getProductosByComandaId);
+router.get('/:id_comanda', comandaProductosController.getProductosByComandaId);
 
 router.get('/', comandaProductosController.getAllComandaProductos);
 //router.get('/:id', comandaProductosController.getComandaProductoById);
