@@ -83,15 +83,18 @@ exports.createComanda = async (req, res) => {
       cotizacion_dolar: cotizacionDolar,
     };
 
+    // Crear la comanda en la base de datos y obtener su ID
     const comandaId = await Comanda.create(nuevaComanda);
 
+    // Registrar cada producto en comanda_productos y actualizar el stock
     await Promise.all(productosProcesados.map(async (producto) => {
-      await Comanda.addProductoToComanda({
+      await ComandaProducto.create({
         id_comanda: comandaId,
         id_producto: producto.id_producto,
         cantidad: producto.cantidad,
         subtotal: producto.subtotal,
       });
+
       await Producto.updateStock(producto.id_producto, producto.cantidad);
     }));
 
