@@ -1,6 +1,7 @@
 // controllers/comandaController.js
 const Comanda = require('../models/Comanda');
 const Producto = require('../models/Producto');
+const ComandaProducto = require('../models/ComandaProducto'); // Importa el modelo
 const axios = require('axios');
 
 require('dotenv').config();
