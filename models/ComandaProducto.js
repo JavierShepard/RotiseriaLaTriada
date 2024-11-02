@@ -12,7 +12,21 @@ const ComandaProducto = {
       }
     );
   },
-
+  // Obtener todos los registros de comanda_productos por id_comanda
+  getByComandaId: (id_comanda, callback) => {
+    db.query(
+      `SELECT cp.*, p.nombre AS producto_nombre
+       FROM comanda_productos cp
+       JOIN productos p ON cp.id_producto = p.id
+       WHERE cp.id_comanda = ?`,
+      [id_comanda],
+      (err, results) => {
+        if (err) return callback(err, null);
+        callback(null, results);
+      }
+    );
+  },
+  
   // Crear un nuevo registro en comanda_productos
   create: (detalleComanda, callback) => {
     db.query(
