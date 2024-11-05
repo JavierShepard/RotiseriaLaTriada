@@ -9,7 +9,7 @@ const comandaProductosRoutes = require('./routes/comandaProductosRoutes');
 require('dotenv').config();
 
 // Lista de orígenes permitidos
-const allowedOrigins = ['http://localhost:5174', 'http://localhost:5173', 'https://rotiserialatriada.onrender.com'];
+const allowedOrigins = ['http://localhost:5174', 'http://localhost:5173', 'https://rotiserialatriada.onrender.com','http://localhost:3001','http://localhost:3000'];
 
 // Configuración del middleware CORS dinámico
 app.use(cors({
