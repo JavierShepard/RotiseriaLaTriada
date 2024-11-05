@@ -47,23 +47,41 @@ async function validarToken(token) {
 
   return false; // Token no válido en ambos endpoints
 }
+let cotizacionDolarCache = null;
+let lastCotizacionTimestamp = 0;
 
-/*exports.createComanda = async (req, res) => {
+async function getCotizacionDolar() {
+  const now = Date.now();
+  if (cotizacionDolarCache && (now - lastCotizacionTimestamp) < 10 * 60 * 1000) {
+    // Retorna la cotización en caché si es reciente (10 minutos)
+    return cotizacionDolarCache;
+  }
+  
+  try {
+    const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+    cotizacionDolarCache = response.data.rates.ARS;
+    lastCotizacionTimestamp = now;
+    return cotizacionDolarCache;
+  } catch (error) {
+    console.error("Error al obtener la cotización del dólar:", error.message);
+    throw new Error("No se pudo obtener la cotización del dólar");
+  }
+}
+
+exports.createComanda = async (req, res) => {
   const { productos } = req.body;
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) return res.status(401).send('Token de autorización faltante.');
 
-  // Validación del token
   const tokenValido = await validarToken(token);
   if (!tokenValido) return res.status(401).send('No autorizado. Token inválido.');
 
   if (!productos || productos.length === 0) return res.status(400).send('Debes agregar al menos un producto');
 
   try {
-    // Obtener cotización del dólar
-    const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
-    const cotizacionDolar = response.data.rates.ARS;
+    // Obtener cotización del dólar con caché
+    const cotizacionDolar = await getCotizacionDolar();
 
     let precioTotal = 0;
     const productosProcesados = await Promise.all(productos.map(async (item) => {
@@ -84,10 +102,8 @@ async function validarToken(token) {
       cotizacion_dolar: cotizacionDolar,
     };
 
-    // Crear la comanda en la base de datos y obtener su ID
     const comandaId = await Comanda.create(nuevaComanda);
 
-    // Registrar cada producto en comanda_productos y actualizar el stock
     await Promise.all(productosProcesados.map(async (producto) => {
       await ComandaProducto.create({
         id_comanda: comandaId,
@@ -99,12 +115,13 @@ async function validarToken(token) {
       await Producto.updateStock(producto.id_producto, producto.cantidad);
     }));
 
-    res.status(201).send('Comanda creada exitosamente con múltiples productos');
+    return res.status(201).json({ message: 'Comanda creada exitosamente con múltiples productos' });
   } catch (error) {
-    res.status(500).send('Error al crear la comanda: ' + error.message);
+    console.error('Error al crear la comanda:', error.message);
+    return res.status(500).json({ error: 'Error al crear la comanda. Por favor, intente nuevamente.' });
   }
 };
-*/
+/*
 exports.createComanda = async (req, res) => {
   const { productos } = req.body;
   const token = req.headers.authorization?.split(' ')[1];
@@ -164,7 +181,7 @@ exports.createComanda = async (req, res) => {
     // Retornar un mensaje claro al usuario sobre el error
     return res.status(500).json({ error: 'Error al crear la comanda. Por favor, intente nuevamente.' });
   }
-};
+};*/
 
 exports.updateComanda = async (req, res) => {
   const { id } = req.params;
