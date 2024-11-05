@@ -67,25 +67,20 @@ async function getCotizacionDolar() {
     throw new Error("No se pudo obtener la cotización del dólar");
   }
 }
+
 exports.createComanda = async (req, res) => {
   const { productos } = req.body;
   const token = req.headers.authorization?.split(' ')[1];
 
-  if (!token) {
-    return res.status(401).send('Token de autorización faltante.');
-  }
+  if (!token) return res.status(401).send('Token de autorización faltante.');
 
   const tokenValido = await validarToken(token);
-  if (!tokenValido) {
-    return res.status(401).send('No autorizado. Token inválido.');
-  }
+  if (!tokenValido) return res.status(401).send('No autorizado. Token inválido.');
 
-  if (!productos || productos.length === 0) {
-    return res.status(400).send('Debes agregar al menos un producto');
-  }
+  if (!productos || productos.length === 0) return res.status(400).send('Debes agregar al menos un producto');
 
   try {
-    // Obtener cotización del dólar
+    // Obtener cotización del dólar con caché
     const cotizacionDolar = await getCotizacionDolar();
 
     let precioTotal = 0;
@@ -102,8 +97,69 @@ exports.createComanda = async (req, res) => {
       return { id_producto, cantidad, subtotal };
     }));
 
+    const nuevaComanda = {
+      precio_total: precioTotal,
+      cotizacion_dolar: cotizacionDolar,
+    };
+
+    const comandaId = await Comanda.create(nuevaComanda);
+
+    await Promise.all(productosProcesados.map(async (producto) => {
+      await ComandaProducto.create({
+        id_comanda: comandaId,
+        id_producto: producto.id_producto,
+        cantidad: producto.cantidad,
+        subtotal: producto.subtotal,
+      });
+
+      await Producto.updateStock(producto.id_producto, producto.cantidad);
+    }));
+
+    return res.status(201).json({ message: 'Comanda creada exitosamente con múltiples productos' });
+  } catch (error) {
+    console.error('Error al crear la comanda:', error.message);
+    return res.status(500).json({ error: 'Error al crear la comanda. Por favor, intente nuevamente.' });
+  }
+};
+/*
+exports.createComanda = async (req, res) => {
+  const { productos } = req.body;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) return res.status(401).send('Token de autorización faltante.');
+
+  // Validación del token
+  const tokenValido = await validarToken(token);
+  if (!tokenValido) return res.status(401).send('No autorizado. Token inválido.');
+
+  if (!productos || productos.length === 0) return res.status(400).send('Debes agregar al menos un producto');
+
+  try {
+    // Obtener cotización del dólar
+    const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+    const cotizacionDolar = response.data.rates.ARS;
+
+    let precioTotal = 0;
+    const productosProcesados = await Promise.all(productos.map(async (item) => {
+      const { id_producto, cantidad } = item;
+      const producto = await Producto.getByIdPromise(id_producto);
+
+      if (!producto) throw new Error(`Producto con id ${id_producto} no encontrado`);
+      if (producto.stock < cantidad) throw new Error(`Stock insuficiente para el producto ${producto.nombre}`);
+
+      const subtotal = producto.precio * cantidad * cotizacionDolar;
+      precioTotal += subtotal;
+
+      return { id_producto, cantidad, subtotal };
+    }));
+
+    const nuevaComanda = {
+      precio_total: precioTotal,
+      cotizacion_dolar: cotizacionDolar,
+    };
+
     // Crear la comanda en la base de datos y obtener su ID
-    const comandaId = await Comanda.create({ precio_total: precioTotal, cotizacion_dolar: cotizacionDolar });
+    const comandaId = await Comanda.create(nuevaComanda);
 
     // Registrar cada producto en comanda_productos y actualizar el stock
     await Promise.all(productosProcesados.map(async (producto) => {
@@ -118,13 +174,14 @@ exports.createComanda = async (req, res) => {
     }));
 
     // Responder con éxito si toda la transacción es exitosa
-    res.status(201).json({ message: 'Comanda creada exitosamente con múltiples productos' });
-
+    return res.status(201).json({ message: 'Comanda creada exitosamente con múltiples productos' });
   } catch (error) {
-    console.error('Error interno al crear la comanda:', error.message);
-    res.status(500).json({ error: 'Error interno al crear la comanda. Por favor, intente nuevamente.' });
+    // Log específico del error para depurar
+    console.error('Error al crear la comanda:', error.message);
+    // Retornar un mensaje claro al usuario sobre el error
+    return res.status(500).json({ error: 'Error al crear la comanda. Por favor, intente nuevamente.' });
   }
-};
+};*/
 
 exports.updateComanda = async (req, res) => {
   const { id } = req.params;
