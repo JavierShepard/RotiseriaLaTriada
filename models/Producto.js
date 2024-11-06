@@ -1,69 +1,87 @@
 const db = require('../config/db');
 
 const Producto = {
+  // Obtener todos los productos
+  getAll: async (callback) => {
+    try {
+      const [results] = await db.query('SELECT * FROM productos');
+      callback(null, results);
+    } catch (err) {
+      callback(err, null);
+    }
+  },
+
   // Obtener un producto por ID (con promesa)
-  getById: (id, callback) => {
-    db.query('SELECT * FROM productos WHERE id = ?', [id], (err, results) => {
-      if (err) return callback(err, null);
+  getById: async (id, callback) => {
+    try {
+      const [results] = await db.query('SELECT * FROM productos WHERE id = ?', [id]);
       if (results.length === 0) return callback(null, null);
       callback(null, results[0]);
-    });
+    } catch (err) {
+      callback(err, null);
+    }
   },
 
   // Obtener un producto por ID usando promesas
-  getByIdPromise: (id) => {
-    return new Promise((resolve, reject) => {
-      db.query('SELECT * FROM productos WHERE id = ?', [id], (err, results) => {
-        if (err) return reject(err);
-        if (results.length === 0) return resolve(null);
-        resolve(results[0]);
-      });
-    });
+  getByIdPromise: async (id) => {
+    try {
+      const [results] = await db.query('SELECT * FROM productos WHERE id = ?', [id]);
+      if (results.length === 0) return null;
+      return results[0];
+    } catch (err) {
+      throw err;
+    }
   },
 
-  create: (producto, callback) => {
+  // Crear un nuevo producto
+  create: async (producto, callback) => {
     const { nombre, stock, precio } = producto;
-    db.query('INSERT INTO productos (nombre, stock, precio) VALUES (?, ?, ?)', 
-    [nombre, stock, precio], (err, result) => {
-      if (err) return callback(err, null);
+    try {
+      const [result] = await db.query(
+        'INSERT INTO productos (nombre, stock, precio) VALUES (?, ?, ?)',
+        [nombre, stock, precio]
+      );
       callback(null, result);
-    });
+    } catch (err) {
+      callback(err, null);
+    }
   },
 
-  updateById: (id, producto, callback) => {
-    db.query('UPDATE productos SET ? WHERE id = ?', [producto, id], (err, result) => {
-      if (err) return callback(err, null);
+  // Actualizar un producto por ID
+  updateById: async (id, producto, callback) => {
+    try {
+      const [result] = await db.query('UPDATE productos SET ? WHERE id = ?', [producto, id]);
       callback(null, result);
-    });
+    } catch (err) {
+      callback(err, null);
+    }
   },
-  // Método para actualizar el stock de un producto
-  updateStock: (id, cantidad) => {
-    return new Promise((resolve, reject) => {
-      db.query(
-        'UPDATE productos SET stock = stock - ? WHERE id = ? AND stock >= ?', 
-        [cantidad, id, cantidad],
-        (err, result) => {
-          if (err) return reject(err);
-          if (result.affectedRows === 0) {
-            return reject(new Error(`Stock insuficiente para el producto con ID ${id}`));
-          }
-          resolve(result);
-        }
+
+  // Actualizar el stock de un producto
+  updateStock: async (id, cantidad) => {
+    try {
+      const [result] = await db.query(
+        'UPDATE productos SET stock = stock - ? WHERE id = ? AND stock >= ?',
+        [cantidad, id, cantidad]
       );
-    });
+      if (result.affectedRows === 0) {
+        throw new Error(`Stock insuficiente para el producto con ID ${id}`);
+      }
+      return result;
+    } catch (err) {
+      throw err;
+    }
   },
-  deleteById: (id, callback) => {
-    db.query('DELETE FROM productos WHERE id = ?', [id], (err, result) => {
-      if (err) return callback(err, null);
+
+  // Eliminar un producto por ID
+  deleteById: async (id, callback) => {
+    try {
+      const [result] = await db.query('DELETE FROM productos WHERE id = ?', [id]);
       callback(null, result);
-    });
-  },
-  getAll: (callback) => {
-    db.query('SELECT * FROM productos', (err, results) => {
-      if (err) return callback(err, null);
-      callback(null, results);
-    });
-  },
+    } catch (err) {
+      callback(err, null);
+    }
+  }
 };
 
 module.exports = Producto;
