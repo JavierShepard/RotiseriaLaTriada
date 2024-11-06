@@ -28,7 +28,7 @@ const ComandaProducto = {
   },
 
   // Crear un nuevo registro en comanda_productos
-  create: (detalleComanda, callback) => {
+  create: (detalleComanda, callback = () => {}) => { // Callback por defecto
     db.query(
       'INSERT INTO comanda_productos (id_comanda, id_producto, cantidad, subtotal) VALUES (?, ?, ?, ?)',
       [detalleComanda.id_comanda, detalleComanda.id_producto, detalleComanda.cantidad, detalleComanda.subtotal],
@@ -38,22 +38,6 @@ const ComandaProducto = {
       }
     );
   },
-
-  /* Obtener un registro específico de comanda_productos por ID
-  getById: (id, callback) => {
-    db.query(
-      `SELECT cp.*, p.nombre AS producto_nombre
-       FROM comanda_productos cp
-       JOIN productos p ON cp.id_producto = p.id
-       WHERE cp.id = ?`,
-      [id],
-      (err, results) => {
-        if (err) return callback(err, null);
-        if (results.length === 0) return callback(null, null);
-        callback(null, results[0]);
-      }
-    );
-  },*/
 
   // Actualizar un registro en comanda_productos por ID
   updateById: (id, detalleComanda, callback) => {
