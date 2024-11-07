@@ -3,6 +3,7 @@ const Comanda = require('../models/Comanda');
 const Producto = require('../models/Producto');
 const ComandaProducto = require('../models/ComandaProducto'); // Importa el modelo
 const axios = require('axios');
+const db = require('../config/db');  
 
 require('dotenv').config();
 
