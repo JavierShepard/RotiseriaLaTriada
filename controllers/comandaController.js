@@ -127,7 +127,7 @@ exports.createComanda = async (req, res) => {
 
 exports.updateComanda = async (req, res) => {
   const { id } = req.params; // ID de la comanda desde la URL
-  const actualizacion = req.body; // Cuerpo del request con los datos a actualizar
+  const { estado } = req.body; // El estado a actualizar desde el cuerpo del request
   const token = req.headers.authorization?.split(' ')[1]; // Token desde el header
 
   if (!token) return res.status(401).send('Token de autorización faltante.');
@@ -136,18 +136,32 @@ exports.updateComanda = async (req, res) => {
   const tokenValido = await validarToken(token);
   if (!tokenValido) return res.status(401).send('No autorizado. Token inválido.');
 
+  if (!estado) {
+    return res.status(400).send('El estado es obligatorio para actualizar la comanda.');
+  }
+
   try {
     // Realizar la actualización en la base de datos
     const updatedComanda = await new Promise((resolve, reject) => {
-      Comanda.updateById(id, actualizacion, (err, result) => {
-        if (err) return reject(err);
+      // Realiza la actualización de estado por ID
+      db.query('UPDATE comandas SET estado = ? WHERE id = ?', [estado, id], (err, result) => {
+        if (err) {
+          console.error('Error al actualizar la comanda:', err);
+          return reject(err);
+        }
+        if (result.affectedRows === 0) {
+          return reject(new Error('Comanda no encontrada'));
+        }
         resolve(result);
       });
     });
 
-    if (!updatedComanda) return res.status(404).json({ error: 'Comanda no encontrada' });
+    // Verificar si la comanda fue actualizada
+    if (!updatedComanda) {
+      return res.status(404).json({ error: 'Comanda no encontrada' });
+    }
 
-    res.status(200).json({ message: 'Comanda actualizada exitosamente', data: actualizacion });
+    res.status(200).json({ message: 'Comanda actualizada exitosamente', data: { id, estado } });
   } catch (error) {
     res.status(500).json({ error: 'Error al actualizar la comanda: ' + error.message });
   }
