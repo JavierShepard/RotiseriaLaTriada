@@ -126,16 +126,18 @@ exports.createComanda = async (req, res) => {
 
 
 exports.updateComanda = async (req, res) => {
-  const { id } = req.params;
-  const actualizacion = req.body;
-  const token = req.headers.authorization?.split(' ')[1];
+  const { id } = req.params; // ID de la comanda desde la URL
+  const actualizacion = req.body; // Cuerpo del request con los datos a actualizar
+  const token = req.headers.authorization?.split(' ')[1]; // Token desde el header
 
   if (!token) return res.status(401).send('Token de autorización faltante.');
 
+  // Validar el token
   const tokenValido = await validarToken(token);
   if (!tokenValido) return res.status(401).send('No autorizado. Token inválido.');
 
   try {
+    // Realizar la actualización en la base de datos
     const updatedComanda = await new Promise((resolve, reject) => {
       Comanda.updateById(id, actualizacion, (err, result) => {
         if (err) return reject(err);
@@ -145,11 +147,12 @@ exports.updateComanda = async (req, res) => {
 
     if (!updatedComanda) return res.status(404).json({ error: 'Comanda no encontrada' });
 
-    res.status(200).json({ message: 'Comanda actualizada exitosamente' });
+    res.status(200).json({ message: 'Comanda actualizada exitosamente', data: actualizacion });
   } catch (error) {
     res.status(500).json({ error: 'Error al actualizar la comanda: ' + error.message });
   }
 };
+
 
 exports.deleteComanda = async (req, res) => {
   const { id } = req.params;

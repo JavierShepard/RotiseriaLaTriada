@@ -42,20 +42,19 @@ const Comanda = {
     });
   },
 
-  // Actualizar una comanda por ID
-  updateById: (id, actualizacion, callback) => {
-    db.query('UPDATE comandas SET ? WHERE id = ?', [actualizacion, id], (err, result) => {
-      if (err) {
-        console.error('Error al actualizar la comanda:', err);
-        return callback(err, null);
-      }
-      if (result.affectedRows === 0) {
-        return callback(null, null);  // No se encontró la comanda
-      }
-      callback(null, result);
-    });
-  },
-
+ // Actualizar una comanda por ID
+ updateById: (id, actualizacion, callback) => {
+  db.query('UPDATE comandas SET ? WHERE id = ?', [actualizacion, id], (err, result) => {
+    if (err) {
+      console.error('Error al actualizar la comanda:', err);
+      return callback(err, null);
+    }
+    if (result.affectedRows === 0) {
+      return callback(null, null); // No se encontró la comanda
+    }
+    callback(null, result);
+  });
+},
   // Obtener una comanda por ID
   getById: (id, callback) => {
     db.query('SELECT * FROM comandas WHERE id = ?', [id], (err, results) => {
