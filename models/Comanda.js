@@ -2,13 +2,13 @@ const db = require('../config/db');
 
 const Comanda = {
   // Obtener todas las comandas
-  getAll: async (callback) => {
+  getAll: async () => {
     try {
       const [results] = await db.query('SELECT * FROM comandas');
-      callback(null, results);
+      return results;
     } catch (err) {
       console.error("Error al obtener las comandas: ", err);
-      callback(err, null);
+      throw new Error("Error al obtener las comandas");
     }
   },
 
@@ -42,43 +42,44 @@ const Comanda = {
     });
   },
 
- // Actualizar una comanda por ID
- updateById: (id, actualizacion, callback) => {
-  db.query('UPDATE comandas SET ? WHERE id = ?', [actualizacion, id], (err, result) => {
-    if (err) {
-      console.error('Error al actualizar la comanda:', err);
-      return callback(err, null);
-    }
-    if (result.affectedRows === 0) {
-      return callback(null, null); // No se encontró la comanda
-    }
-    callback(null, result);
-  });
-},
-  // Obtener una comanda por ID
-  getById: (id, callback) => {
-    db.query('SELECT * FROM comandas WHERE id = ?', [id], (err, results) => {
-      if (err) {
-        console.error('Error al obtener la comanda con ID:', err);
-        return callback(err, null);
+  // Actualizar una comanda por ID
+  updateById: async (id, actualizacion) => {
+    try {
+      const [result] = await db.query('UPDATE comandas SET ? WHERE id = ?', [actualizacion, id]);
+      if (result.affectedRows === 0) {
+        return null; // No se encontró la comanda
       }
-      if (results.length === 0) return callback(null, null);  // No se encontró la comanda
-      callback(null, results[0]);  // Retorna la comanda encontrada
-    });
+      return result;
+    } catch (err) {
+      console.error('Error al actualizar la comanda:', err);
+      throw new Error('Error al actualizar la comanda');
+    }
+  },
+
+  // Obtener una comanda por ID
+  getById: async (id) => {
+    try {
+      const [results] = await db.query('SELECT * FROM comandas WHERE id = ?', [id]);
+      if (results.length === 0) return null; // No se encontró la comanda
+      return results[0]; // Retorna la comanda encontrada
+    } catch (err) {
+      console.error('Error al obtener la comanda con ID:', err);
+      throw new Error('Error al obtener la comanda');
+    }
   },
 
   // Eliminar una comanda por ID
-  deleteById: (id, callback) => {
-    db.query('DELETE FROM comandas WHERE id = ?', [id], (err, result) => {
-      if (err) {
-        console.error('Error al eliminar la comanda:', err);
-        return callback(err, null);
-      }
+  deleteById: async (id) => {
+    try {
+      const [result] = await db.query('DELETE FROM comandas WHERE id = ?', [id]);
       if (result.affectedRows === 0) {
-        return callback(null, null);  // No se encontró la comanda
+        return null; // No se encontró la comanda
       }
-      callback(null, result);
-    });
+      return result;
+    } catch (err) {
+      console.error('Error al eliminar la comanda:', err);
+      throw new Error('Error al eliminar la comanda');
+    }
   }
 };
 
