@@ -1,6 +1,18 @@
 const db = require('../config/db');
 
 const ComandaProducto = {
+  // Eliminar productos asociados a una comanda por el ID de la comanda
+  deleteByComandaId: (id_comanda) => {
+    return new Promise((resolve, reject) => {
+      db.query('DELETE FROM comanda_productos WHERE id_comanda = ?', [id_comanda], (err, result) => {
+        if (err) {
+          console.error('Error al eliminar productos de la comanda:', err);
+          return reject(err); // Rechazar la promesa con el error.
+        }
+        resolve(result); // Resolver la promesa si la eliminación fue exitosa.
+      });
+    });
+  },
   // Obtener todos los registros de comanda_productos
   getAll: async (callback) => {
     try {
@@ -62,6 +74,7 @@ const ComandaProducto = {
       callback(err, null);
     }
   }
+  
 };
 
 module.exports = ComandaProducto;
