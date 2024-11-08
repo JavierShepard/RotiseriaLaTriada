@@ -2,27 +2,16 @@ const db = require('../config/db');
 
 const Producto = {
   // Obtener todos los productos
-  getAll: async (callback) => {
+  getAll: async () => {
     try {
       const [results] = await db.query('SELECT * FROM productos');
-      callback(null, results);
+      return results;
     } catch (err) {
-      callback(err, null);
+      throw err;
     }
   },
 
-  // Obtener un producto por ID (con promesa)
-  getById: async (id, callback) => {
-    try {
-      const [results] = await db.query('SELECT * FROM productos WHERE id = ?', [id]);
-      if (results.length === 0) return callback(null, null);
-      callback(null, results[0]);
-    } catch (err) {
-      callback(err, null);
-    }
-  },
-
-  // Obtener un producto por ID usando promesas
+  // Obtener un producto por ID
   getByIdPromise: async (id) => {
     try {
       const [results] = await db.query('SELECT * FROM productos WHERE id = ?', [id]);
@@ -34,39 +23,23 @@ const Producto = {
   },
 
   // Crear un nuevo producto
-  create: async (producto, callback) => {
+  create: async (producto) => {
     const { nombre, stock, precio } = producto;
     try {
       const [result] = await db.query(
         'INSERT INTO productos (nombre, stock, precio) VALUES (?, ?, ?)',
         [nombre, stock, precio]
       );
-      callback(null, result);
+      return result;
     } catch (err) {
-      callback(err, null);
+      throw err;
     }
   },
 
   // Actualizar un producto por ID
-  updateById: async (id, producto, callback) => {
+  updateById: async (id, producto) => {
     try {
       const [result] = await db.query('UPDATE productos SET ? WHERE id = ?', [producto, id]);
-      callback(null, result);
-    } catch (err) {
-      callback(err, null);
-    }
-  },
-
-  // Actualizar el stock de un producto
-  updateStock: async (id, cantidad) => {
-    try {
-      const [result] = await db.query(
-        'UPDATE productos SET stock = stock - ? WHERE id = ? AND stock >= ?',
-        [cantidad, id, cantidad]
-      );
-      if (result.affectedRows === 0) {
-        throw new Error(`Stock insuficiente para el producto con ID ${id}`);
-      }
       return result;
     } catch (err) {
       throw err;
@@ -74,12 +47,12 @@ const Producto = {
   },
 
   // Eliminar un producto por ID
-  deleteById: async (id, callback) => {
+  deleteById: async (id) => {
     try {
       const [result] = await db.query('DELETE FROM productos WHERE id = ?', [id]);
-      callback(null, result);
+      return result;
     } catch (err) {
-      callback(err, null);
+      throw err;
     }
   }
 };
