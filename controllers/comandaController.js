@@ -5,6 +5,28 @@ const axios = require('axios');
 const db = require('../config/db');
 require('dotenv').config();
 
+const axios = require('axios');
+
+let cotizacionDolarCache = null;
+let lastCotizacionTimestamp = 0;
+
+async function getCotizacionDolar() {
+  const now = Date.now();
+  if (cotizacionDolarCache && (now - lastCotizacionTimestamp) < 10 * 60 * 1000) {
+    // Retorna la cotización en caché si es reciente (10 minutos)
+    return cotizacionDolarCache;
+  }
+
+  try {
+    const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+    cotizacionDolarCache = response.data.rates.ARS;
+    lastCotizacionTimestamp = now;
+    return cotizacionDolarCache;
+  } catch (error) {
+    console.error("Error al obtener la cotización del dólar:", error.message);
+    throw new Error("No se pudo obtener la cotización del dólar");
+  }
+}
 // Validación de token en dos endpoints
 async function validarToken(token) {
   try {
