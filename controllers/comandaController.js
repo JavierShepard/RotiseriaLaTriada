@@ -5,7 +5,6 @@ const axios = require('axios');
 const db = require('../config/db');
 require('dotenv').config();
 
-const axios = require('axios');
 
 let cotizacionDolarCache = null;
 let lastCotizacionTimestamp = 0;
