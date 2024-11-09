@@ -34,7 +34,7 @@ app.use(express.json());
 // Rutas
 app.use('/api', productoRoutes);
 app.use('/api', comandaRoutes);
-app.use('/api/comanda_productos', comandaProductosRoutes);
+
 
 // Inicialización del servidor
 const PORT = process.env.PORT || 3000;
