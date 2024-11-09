@@ -1,86 +1,43 @@
 const db = require('../config/db');
 
 const Comanda = {
-  // Obtener todas las comandas
   getAll: async () => {
-    try {
-      const [results] = await db.query('SELECT * FROM comandas');
-      return results;
-    } catch (err) {
-      console.error("Error al obtener las comandas: ", err);
-      throw new Error("Error al obtener las comandas");
-    }
+    const [results] = await db.query('SELECT * FROM comandas');
+    return results.map((comanda) => ({
+      ...comanda,
+      productos: JSON.parse(comanda.productos || '[]'),
+    }));
   },
 
-  // Crear una nueva comanda
-  create: (comanda) => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const [result] = await db.query(
-          'INSERT INTO comandas (precio_total, cotizacion_dolar) VALUES (?, ?)', 
-          [comanda.precio_total, comanda.cotizacion_dolar]
-        );
-        resolve(result.insertId);  // Devolvemos el ID de la comanda recién creada
-      } catch (err) {
-        reject(err);
-      }
-    });
-  },
-
-  // Asociar un producto a una comanda
-  addProductoToComanda: (detalleComanda) => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const [result] = await db.query(
-          'INSERT INTO comanda_productos (id_comanda, id_producto, cantidad, subtotal) VALUES (?, ?, ?, ?)',
-          [detalleComanda.id_comanda, detalleComanda.id_producto, detalleComanda.cantidad, detalleComanda.subtotal]
-        );
-        resolve(result);
-      } catch (err) {
-        reject(err);
-      }
-    });
-  },
-
-  // Actualizar una comanda por ID
-  updateById: async (id, actualizacion) => {
-    try {
-      const [result] = await db.query('UPDATE comandas SET ? WHERE id = ?', [actualizacion, id]);
-      if (result.affectedRows === 0) {
-        return null; // No se encontró la comanda
-      }
-      return result;
-    } catch (err) {
-      console.error('Error al actualizar la comanda:', err);
-      throw new Error('Error al actualizar la comanda');
-    }
-  },
-
-  // Obtener una comanda por ID
   getById: async (id) => {
-    try {
-      const [results] = await db.query('SELECT * FROM comandas WHERE id = ?', [id]);
-      if (results.length === 0) return null; // No se encontró la comanda
-      return results[0]; // Retorna la comanda encontrada
-    } catch (err) {
-      console.error('Error al obtener la comanda con ID:', err);
-      throw new Error('Error al obtener la comanda');
-    }
+    const [results] = await db.query('SELECT * FROM comandas WHERE id = ?', [id]);
+    if (results.length === 0) return null;
+    const comanda = results[0];
+    return { ...comanda, productos: JSON.parse(comanda.productos || '[]') };
   },
 
-  // Eliminar una comanda por ID
+  create: async ({ precio_total, cotizacion_dolar, productos, estado = 'Pendiente' }) => {
+    const [result] = await db.query(
+      'INSERT INTO comandas (precio_total, cotizacion_dolar, productos, estado, created_at) VALUES (?, ?, ?, ?, NOW())',
+      [precio_total, cotizacion_dolar, JSON.stringify(productos), estado]
+    );
+    return result.insertId;
+  },
+
+  updateById: async (id, { precio_total, cotizacion_dolar, productos, estado }) => {
+    const [result] = await db.query(
+      'UPDATE comandas SET precio_total = ?, cotizacion_dolar = ?, productos = ?, estado = ? WHERE id = ?',
+      [precio_total, cotizacion_dolar, JSON.stringify(productos), estado, id]
+    );
+    if (result.affectedRows === 0) return null;
+    return result;
+  },
+
   deleteById: async (id) => {
-    try {
-      const [result] = await db.query('DELETE FROM comandas WHERE id = ?', [id]);
-      if (result.affectedRows === 0) {
-        return null; // No se encontró la comanda
-      }
-      return result;
-    } catch (err) {
-      console.error('Error al eliminar la comanda:', err);
-      throw new Error('Error al eliminar la comanda');
-    }
-  }
+    const [result] = await db.query('DELETE FROM comandas WHERE id = ?', [id]);
+    if (result.affectedRows === 0) return null;
+    return result;
+  },
 };
 
 module.exports = Comanda;
