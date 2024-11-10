@@ -31,35 +31,21 @@ const Comanda = {
     }
   },
 
-  create: async ({ precio_total, cotizacion_dolar, estado = 'Pendiente', productos }) => {
-    const connection = await db.getConnection();
-    try {
-      await connection.beginTransaction();
+  // Crear una nueva comanda
+  create: async ({ precio_total, cotizacion_dolar, estado }) => {
+    const [result] = await db.query(
+      'INSERT INTO comandas (precio_total, cotizacion_dolar, estado, created_at) VALUES (?, ?, ?, NOW())',
+      [precio_total, cotizacion_dolar, estado]
+    );
+    return result.insertId;
+  },
 
-      const [result] = await connection.query(
-        'INSERT INTO comandas (precio_total, cotizacion_dolar, estado, created_at) VALUES (?, ?, ?, NOW())',
-        [precio_total, cotizacion_dolar, estado]
-      );
-
-      const comandaId = result.insertId;
-      await Promise.all(
-        productos.map(({ id_producto, cantidad, subtotal }) =>
-          connection.query(
-            'INSERT INTO comanda_productos (id_comanda, id_producto, cantidad, subtotal) VALUES (?, ?, ?, ?)',
-            [comandaId, id_producto, cantidad, subtotal]
-          )
-        )
-      );
-
-      await connection.commit();
-      return comandaId;
-    } catch (err) {
-      await connection.rollback();
-      console.error('Error al crear la comanda:', err.message);
-      throw new Error('Error al crear la comanda.');
-    } finally {
-      connection.release();
-    }
+  // Agregar productos a una comanda
+  addProductoToComanda: async ({ id_comanda, id_producto, cantidad, subtotal }) => {
+    await db.query(
+      'INSERT INTO comanda_productos (id_comanda, id_producto, cantidad, subtotal) VALUES (?, ?, ?, ?)',
+      [id_comanda, id_producto, cantidad, subtotal]
+    );
   },
 
   updateById: async (id, { precio_total, cotizacion_dolar, estado, productos }) => {
