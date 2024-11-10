@@ -47,11 +47,20 @@ exports.getPedidoById = async (req, res) => {
   }
 };
 
-// Crear un nuevo pedido
 exports.createPedido = async (req, res) => {
   const { producto_id, cantidad } = req.body;
 
   try {
+    // Verificar que se reciba el producto_id
+    if (!producto_id) {
+      return res.status(400).json({ success: false, error: 'El campo producto_id es obligatorio.' });
+    }
+
+    // Verificar que se reciba la cantidad
+    if (!cantidad || cantidad <= 0) {
+      return res.status(400).json({ success: false, error: 'La cantidad debe ser mayor a 0.' });
+    }
+
     // Verificar que el producto exista
     const producto = await Producto.getByIdPromise(producto_id);
     if (!producto) {
@@ -73,7 +82,7 @@ exports.createPedido = async (req, res) => {
     const nuevoPedido = {
       precio_total: precioTotal,
       cotizacion_dolar: cotizacionDolar,
-      estado: 'Pendiente'
+      estado: 'Pendiente',
     };
     const result = await Pedido.create(nuevoPedido);
 
@@ -82,7 +91,7 @@ exports.createPedido = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: { id: result.insertId, ...nuevoPedido }
+      data: { id: result.insertId, ...nuevoPedido },
     });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Error al crear el pedido: ' + error.message });
