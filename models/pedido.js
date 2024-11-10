@@ -1,57 +1,54 @@
 const db = require('../config/db');
 
-
 const Pedido = {
-  crear: (precioTotal, cotizacionDolar, estado, productos, callback) => {
-    const query = 'INSERT INTO pedidos (precio_total, cotizacion_dolar, estado) VALUES (?, ?, ?)';
-    db.query(query, [precioTotal, cotizacionDolar, estado], (err, result) => {
-      if (err) return callback(err);
-
-      const pedidoId = result.insertId;
-
-      // Inserción de productos asociados
-      productos.forEach(producto => {
-        const { id_producto, cantidad, subtotal } = producto;
-        const queryComanda = 'INSERT INTO comanda_productos (id_comanda, id_producto, cantidad, subtotal) VALUES (?, ?, ?, ?)';
-        db.query(queryComanda, [pedidoId, id_producto, cantidad, subtotal], err => {
-          if (err) return callback(err);
-        });
-      });
-
-      callback(null, { id: pedidoId, precio_total: precioTotal, cotizacion_dolar: cotizacionDolar, estado });
-    });
+  getAll: async () => {
+    try {
+      const [results] = await db.query('SELECT * FROM pedidos');
+      return results;
+    } catch (err) {
+      throw err;
+    }
   },
 
-  actualizar: (id, precioTotal, cotizacionDolar, estado, callback) => {
-    const query = 'UPDATE pedidos SET precio_total = ?, cotizacion_dolar = ?, estado = ? WHERE id = ?';
-    db.query(query, [precioTotal, cotizacionDolar, estado, id], (err, result) => {
-      if (err) return callback(err);
-      callback(null, { id, precio_total: precioTotal, cotizacion_dolar: cotizacionDolar, estado });
-    });
+  getById: async (id) => {
+    try {
+      const [results] = await db.query('SELECT * FROM pedidos WHERE id = ?', [id]);
+      if (results.length === 0) return null;
+      return results[0];
+    } catch (err) {
+      throw err;
+    }
   },
 
-  eliminar: (id, callback) => {
-    const query = 'DELETE FROM pedidos WHERE id = ?';
-    db.query(query, [id], (err, result) => {
-      if (err) return callback(err);
-      callback(null, result);
-    });
+  create: async (pedido) => {
+    const { producto_id, cantidad, precio_dolar, precio_pesos } = pedido;
+    try {
+      const [result] = await db.query(
+        'INSERT INTO pedidos (producto_id, cantidad, precio_dolar, precio_pesos) VALUES (?, ?, ?, ?)',
+        [producto_id, cantidad, precio_dolar, precio_pesos]
+      );
+      return result;
+    } catch (err) {
+      throw err;
+    }
   },
 
-  obtenerTodos: (callback) => {
-    const query = 'SELECT * FROM pedidos';
-    db.query(query, (err, result) => {
-      if (err) return callback(err);
-      callback(null, result);
-    });
+  updateById: async (id, pedido) => {
+    try {
+      const [result] = await db.query('UPDATE pedidos SET ? WHERE id = ?', [pedido, id]);
+      return result;
+    } catch (err) {
+      throw err;
+    }
   },
 
-  obtenerPorId: (id, callback) => {
-    const query = 'SELECT * FROM pedidos WHERE id = ?';
-    db.query(query, [id], (err, result) => {
-      if (err) return callback(err);
-      callback(null, result[0]);
-    });
+  deleteById: async (id) => {
+    try {
+      const [result] = await db.query('DELETE FROM pedidos WHERE id = ?', [id]);
+      return result;
+    } catch (err) {
+      throw err;
+    }
   }
 };
 

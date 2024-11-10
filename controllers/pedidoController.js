@@ -1,62 +1,124 @@
-// controllers/pedidoController.js
-const Pedido = require('../models/pedido');
+const Pedido = require('../models/Pedido');
+const Producto = require('../models/Producto');
+//const { getCotizacionDolar } = require('../utils/dolarUtils');
 
-const crearPedido = (req, res) => {
-  const { precioTotal, cotizacionDolar, estado, productos } = req.body;
+let cotizacionDolarCache = null;
+let lastCotizacionTimestamp = 0;
 
-  if (!precioTotal || !cotizacionDolar || !estado || !productos) {
-    return res.status(400).send('Datos incompletos.');
+async function getCotizacionDolar() {
+  const now = Date.now();
+  if (cotizacionDolarCache && (now - lastCotizacionTimestamp) < 10 * 60 * 1000) {
+    // Retorna la cotización en caché si es reciente (10 minutos)
+    return cotizacionDolarCache;
   }
-
-  Pedido.crear(precioTotal, cotizacionDolar, estado, productos, (err, nuevoPedido) => {
-    if (err) return res.status(500).send('Error al crear el pedido');
-    res.status(201).json(nuevoPedido);
-  });
-};
-
-const actualizarPedido = (req, res) => {
-  const { id } = req.params;
-  const { precioTotal, cotizacionDolar, estado } = req.body;
-
-  if (!precioTotal || !cotizacionDolar || !estado) {
-    return res.status(400).send('Datos incompletos.');
+  
+  try {
+    const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+    cotizacionDolarCache = response.data.rates.ARS;
+    lastCotizacionTimestamp = now;
+    return cotizacionDolarCache;
+  } catch (error) {
+    console.error("Error al obtener la cotización del dólar:", error.message);
+    throw new Error("No se pudo obtener la cotización del dólar");
   }
+}
 
-  Pedido.actualizar(id, precioTotal, cotizacionDolar, estado, (err, pedidoActualizado) => {
-    if (err) return res.status(500).send('Error al actualizar el pedido');
-    res.json(pedidoActualizado);
-  });
+
+// Obtener todos los pedidos
+exports.getAllPedidos = async (req, res) => {
+  try {
+    const pedidos = await Pedido.getAll();
+    res.status(200).json({ success: true, data: pedidos });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 };
 
-const eliminarPedido = (req, res) => {
+// Obtener un pedido por ID
+exports.getPedidoById = async (req, res) => {
   const { id } = req.params;
 
-  Pedido.eliminar(id, (err, result) => {
-    if (err) return res.status(500).send('Error al eliminar el pedido');
-    res.status(204).send();
-  });
+  try {
+    const pedido = await Pedido.getById(id);
+    if (!pedido) {
+      return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
+    }
+    res.status(200).json({ success: true, data: pedido });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 };
 
-const obtenerPedidos = (req, res) => {
-  Pedido.obtenerTodos((err, pedidos) => {
-    if (err) return res.status(500).send('Error al obtener los pedidos');
-    res.json(pedidos);
-  });
+// Crear un nuevo pedido
+exports.createPedido = async (req, res) => {
+  const { producto_id, cantidad } = req.body;
+
+  try {
+    // Verificar que el producto exista
+    const producto = await Producto.getByIdPromise(producto_id);
+    if (!producto) {
+      return res.status(404).json({ success: false, error: 'Producto no encontrado' });
+    }
+
+    // Verificar stock disponible
+    if (producto.stock < cantidad) {
+      return res.status(400).json({ success: false, error: 'Stock insuficiente' });
+    }
+
+    // Obtener cotización del dólar
+    const cotizacionDolar = await getCotizacionDolar();
+
+    // Calcular precios
+    const precio_dolar = producto.precio * cantidad;
+    const precio_pesos = precio_dolar * cotizacionDolar;
+
+    // Crear pedido
+    const nuevoPedido = { producto_id, cantidad, precio_dolar, precio_pesos };
+    const result = await Pedido.create(nuevoPedido);
+
+    // Actualizar stock del producto
+    await Producto.updateById(producto_id, { stock: producto.stock - cantidad });
+
+    res.status(201).json({
+      success: true,
+      data: { id: result.insertId, ...nuevoPedido }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error al crear el pedido: ' + error.message });
+  }
 };
 
-const obtenerPedidoPorId = (req, res) => {
+// Actualizar un pedido
+exports.updatePedido = async (req, res) => {
+  const { id } = req.params;
+  const { cantidad } = req.body;
+
+  try {
+    const pedido = await Pedido.getById(id);
+    if (!pedido) {
+      return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
+    }
+
+    await Pedido.updateById(id, { cantidad });
+    res.status(200).json({ success: true, data: { id, cantidad } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error al actualizar el pedido: ' + error.message });
+  }
+};
+
+// Eliminar un pedido
+exports.deletePedido = async (req, res) => {
   const { id } = req.params;
 
-  Pedido.obtenerPorId(id, (err, pedido) => {
-    if (err) return res.status(500).send('Error al obtener el pedido');
-    res.json(pedido);
-  });
-};
+  try {
+    const pedido = await Pedido.getById(id);
+    if (!pedido) {
+      return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
+    }
 
-module.exports = {
-  crearPedido,
-  actualizarPedido,
-  eliminarPedido,
-  obtenerPedidos,
-  obtenerPedidoPorId
+    await Pedido.deleteById(id);
+    res.status(200).json({ success: true, data: pedido });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error al eliminar el pedido: ' + error.message });
+  }
 };
