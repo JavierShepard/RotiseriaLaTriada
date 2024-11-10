@@ -39,24 +39,29 @@ exports.getComandaById = async (req, res) => {
   }
 };
 
-// Crear una nueva comanda
 exports.createComanda = async (req, res) => {
   const { productos } = req.body;
   const token = req.headers.authorization?.split(' ')[1];
 
+  // Validar si el token está presente
   if (!token) return res.status(401).json({ error: 'Token de autorización faltante.' });
 
+  // Validar el token
   const tokenValido = await validarToken(token);
   if (!tokenValido) return res.status(401).json({ error: 'No autorizado. Token inválido.' });
 
+  // Validar si se enviaron productos
   if (!productos || productos.length === 0) {
     return res.status(400).json({ error: 'Debes agregar al menos un producto.' });
   }
 
   try {
+    // Obtener la cotización del dólar
     const cotizacionDolar = await getCotizacionDolar();
+
     let precioTotal = 0;
 
+    // Validar productos y calcular subtotales
     const productosProcesados = await Promise.all(
       productos.map(async ({ id_producto, cantidad }) => {
         const producto = await Producto.getById(id_producto);
@@ -71,13 +76,21 @@ exports.createComanda = async (req, res) => {
       })
     );
 
+    // Crear la comanda en la tabla `comandas`
     const nuevaComanda = {
       precio_total: precioTotal,
       cotizacion_dolar: cotizacionDolar,
-      productos: productosProcesados,
+      estado: 'Pendiente',
     };
 
     const comandaId = await Comanda.create(nuevaComanda);
+
+    // Insertar productos en la tabla `comanda_productos`
+    await Promise.all(
+      productosProcesados.map(({ id_producto, cantidad, subtotal }) =>
+        Comanda.addProductoToComanda({ id_comanda: comandaId, id_producto, cantidad, subtotal })
+      )
+    );
 
     res.status(201).json({
       id: comandaId,

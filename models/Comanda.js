@@ -1,72 +1,122 @@
 const db = require('../config/db');
 
 const Comanda = {
-  // Obtener todas las comandas
   getAll: async () => {
     try {
-      const [results] = await db.query('SELECT * FROM comandas');
-      return results.map((comanda) => ({
-        ...comanda,
-        productos: parseJSON(comanda.productos), // Parseo seguro
-      }));
+      const [comandas] = await db.query('SELECT * FROM comandas');
+      const comandasWithProducts = await Promise.all(
+        comandas.map(async (comanda) => {
+          const productos = await Comanda.getProductosByComandaId(comanda.id);
+          return { ...comanda, productos };
+        })
+      );
+      return comandasWithProducts;
     } catch (err) {
       console.error('Error al obtener todas las comandas:', err.message);
       throw new Error('Error al obtener todas las comandas.');
     }
   },
 
-  // Obtener una comanda por ID
   getById: async (id) => {
     try {
       const [results] = await db.query('SELECT * FROM comandas WHERE id = ?', [id]);
       if (results.length === 0) return null;
 
       const comanda = results[0];
-      return {
-        ...comanda,
-        productos: parseJSON(comanda.productos), // Parseo seguro
-      };
+      const productos = await Comanda.getProductosByComandaId(comanda.id);
+      return { ...comanda, productos };
     } catch (err) {
       console.error(`Error al obtener la comanda con ID ${id}:`, err.message);
       throw new Error('Error al obtener la comanda.');
     }
   },
 
-  // Crear una nueva comanda
-  create: async ({ precio_total, cotizacion_dolar, productos, estado = 'Pendiente' }) => {
-    const [result] = await db.query(
-      'INSERT INTO comandas (precio_total, cotizacion_dolar, productos, estado, created_at) VALUES (?, ?, ?, ?, NOW())',
-      [precio_total, cotizacion_dolar, JSON.stringify(productos), estado]
-    );
-    return result.insertId;
+  create: async ({ precio_total, cotizacion_dolar, estado = 'Pendiente', productos }) => {
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      const [result] = await connection.query(
+        'INSERT INTO comandas (precio_total, cotizacion_dolar, estado, created_at) VALUES (?, ?, ?, NOW())',
+        [precio_total, cotizacion_dolar, estado]
+      );
+
+      const comandaId = result.insertId;
+      await Promise.all(
+        productos.map(({ id_producto, cantidad, subtotal }) =>
+          connection.query(
+            'INSERT INTO comanda_productos (id_comanda, id_producto, cantidad, subtotal) VALUES (?, ?, ?, ?)',
+            [comandaId, id_producto, cantidad, subtotal]
+          )
+        )
+      );
+
+      await connection.commit();
+      return comandaId;
+    } catch (err) {
+      await connection.rollback();
+      console.error('Error al crear la comanda:', err.message);
+      throw new Error('Error al crear la comanda.');
+    } finally {
+      connection.release();
+    }
   },
 
-  // Actualizar una comanda por ID
-  updateById: async (id, { precio_total, cotizacion_dolar, productos, estado }) => {
-    const [result] = await db.query(
-      'UPDATE comandas SET precio_total = ?, cotizacion_dolar = ?, productos = ?, estado = ? WHERE id = ?',
-      [precio_total, cotizacion_dolar, JSON.stringify(productos), estado, id]
-    );
-    if (result.affectedRows === 0) return null;
-    return result;
+  updateById: async (id, { precio_total, cotizacion_dolar, estado, productos }) => {
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      const [result] = await connection.query(
+        'UPDATE comandas SET precio_total = ?, cotizacion_dolar = ?, estado = ? WHERE id = ?',
+        [precio_total, cotizacion_dolar, estado, id]
+      );
+
+      if (result.affectedRows === 0) {
+        await connection.rollback();
+        return null;
+      }
+
+      await connection.query('DELETE FROM comanda_productos WHERE id_comanda = ?', [id]);
+      await Promise.all(
+        productos.map(({ id_producto, cantidad, subtotal }) =>
+          connection.query(
+            'INSERT INTO comanda_productos (id_comanda, id_producto, cantidad, subtotal) VALUES (?, ?, ?, ?)',
+            [id, id_producto, cantidad, subtotal]
+          )
+        )
+      );
+
+      await connection.commit();
+      return true;
+    } catch (err) {
+      await connection.rollback();
+      console.error(`Error al actualizar la comanda con ID ${id}:`, err.message);
+      throw new Error('Error al actualizar la comanda.');
+    } finally {
+      connection.release();
+    }
   },
 
-  // Eliminar una comanda por ID
   deleteById: async (id) => {
-    const [result] = await db.query('DELETE FROM comandas WHERE id = ?', [id]);
-    if (result.affectedRows === 0) return null;
-    return result;
+    try {
+      const [result] = await db.query('DELETE FROM comandas WHERE id = ?', [id]);
+      return result.affectedRows > 0;
+    } catch (err) {
+      console.error(`Error al eliminar la comanda con ID ${id}:`, err.message);
+      throw new Error('Error al eliminar la comanda.');
+    }
+  },
+
+  getProductosByComandaId: async (id_comanda) => {
+    try {
+      const [productos] = await db.query('SELECT * FROM comanda_productos WHERE id_comanda = ?', [id_comanda]);
+      return productos;
+    } catch (err) {
+      console.error(`Error al obtener productos de la comanda con ID ${id_comanda}:`, err.message);
+      throw new Error('Error al obtener productos de la comanda.');
+    }
   },
 };
-
-// Función para parsear JSON de forma segura
-function parseJSON(jsonString) {
-  try {
-    return JSON.parse(jsonString);
-  } catch (error) {
-    console.error('Error al parsear JSON:', error.message);
-    return []; // Devuelve un array vacío si el JSON es inválido
-  }
-}
 
 module.exports = Comanda;
