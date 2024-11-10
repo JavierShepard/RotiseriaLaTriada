@@ -1,6 +1,6 @@
 const Comanda = require('../models/Comanda');
 const Producto = require('../models/Producto');
-const { getCotizacionDolar } = require('../services/cotizacionService');
+const { getCotizacionDolar, validarToken } = require('../services/cotizacionService');
 
 // Obtener todas las comandas
 exports.getAllComandas = async (req, res) => {
@@ -39,6 +39,12 @@ exports.getComandaById = async (req, res) => {
 // Crear una nueva comanda
 exports.createComanda = async (req, res) => {
   const { productos } = req.body;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: 'Token de autorización faltante.' });
+
+  const tokenValido = await validarToken(token);
+  if (!tokenValido) return res.status(401).json({ error: 'No autorizado. Token inválido.' });
 
   if (!productos || productos.length === 0) {
     return res.status(400).json({ error: 'Debes agregar al menos un producto.' });
@@ -84,6 +90,12 @@ exports.createComanda = async (req, res) => {
 exports.updateComanda = async (req, res) => {
   const { id } = req.params;
   const { productos } = req.body;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: 'Token de autorización faltante.' });
+
+  const tokenValido = await validarToken(token);
+  if (!tokenValido) return res.status(401).json({ error: 'No autorizado. Token inválido.' });
 
   if (!productos || productos.length === 0) {
     return res.status(400).json({ error: 'Debes agregar al menos un producto.' });
@@ -136,6 +148,12 @@ exports.updateComanda = async (req, res) => {
 // Eliminar una comanda
 exports.deleteComanda = async (req, res) => {
   const { id } = req.params;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: 'Token de autorización faltante.' });
+
+  const tokenValido = await validarToken(token);
+  if (!tokenValido) return res.status(401).json({ error: 'No autorizado. Token inválido.' });
 
   try {
     const comanda = await Comanda.getById(id);
@@ -144,7 +162,7 @@ exports.deleteComanda = async (req, res) => {
     }
 
     await Comanda.deleteById(id);
-    res.status(204).send(); // Sin cuerpo en la respuesta
+    res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: `Error al eliminar la comanda: ${error.message}` });
   }
