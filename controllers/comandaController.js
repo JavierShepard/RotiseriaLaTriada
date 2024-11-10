@@ -2,22 +2,25 @@ const Comanda = require('../models/Comanda');
 const Producto = require('../models/Producto');
 const { getCotizacionDolar, validarToken } = require('../services/cotizacionService');
 
-// Obtener todas las comandas
 exports.getAllComandas = async (req, res) => {
   try {
     const comandas = await Comanda.getAll();
+    if (comandas.length === 0) {
+      return res.status(404).json({ error: 'No se encontraron comandas.' });
+    }
     res.status(200).json(comandas);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener las comandas.' });
   }
 };
 
-// Obtener una comanda por ID
 exports.getComandaById = async (req, res) => {
   const { id } = req.params;
   try {
     const comanda = await Comanda.getById(id);
-    if (!comanda) return res.status(404).json({ error: 'Comanda no encontrada.' });
+    if (!comanda) {
+      return res.status(404).json({ error: 'Comanda no encontrada.' });
+    }
 
     res.status(200).json({
       id: comanda.id,
