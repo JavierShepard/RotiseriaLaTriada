@@ -1,6 +1,6 @@
 const Pedido = require('../models/pedido');
 const Producto = require('../models/Producto');
-
+const db = require('../config/db'); // Importar la base de datos
 // Obtener todos los pedidos
 exports.getAllPedidos = async (req, res) => {
   try {
