@@ -1,4 +1,4 @@
-const Pedido = require ('../Pedido');
+const Pedido = require ('../models/pedido');
 const Producto = require('../models/Producto');
 //const { getCotizacionDolar } = require('../utils/dolarUtils');
 let cotizacionDolarCache = null;
