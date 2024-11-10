@@ -2,9 +2,28 @@ const Pedido = require('../models/pedido');
 const Producto = require('../models/Producto');
 const db = require('../config/db'); // Importar la base de datos
 // Obtener todos los pedidos
-exports.getAllPedidos = async (req, res) => {
+/*exports.getAllPedidos = async (req, res) => {
   try {
     const pedidos = await Pedido.getAll();
+    res.status(200).json({ success: true, data: pedidos });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};*/
+exports.getAllPedidos = async (req, res) => {
+  try {
+    // Obtener todos los pedidos
+    const pedidos = await Pedido.getAll();
+
+    // Agregar productos a cada pedido
+    for (const pedido of pedidos) {
+      const [productos] = await db.query(
+        'SELECT producto_id AS id, cantidad, subtotal FROM pedido_productos WHERE pedido_id = ?',
+        [pedido.id]
+      );
+      pedido.productos = productos; // Añadir productos al pedido
+    }
+
     res.status(200).json({ success: true, data: pedidos });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
