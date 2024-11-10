@@ -3,7 +3,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const app = express();
 const productoRoutes = require('./routes/productoRoutes');
-const comandaRoutes = require('./routes/comandaRoutes');
+
 
 require('dotenv').config();
 
@@ -33,7 +33,7 @@ app.use(express.json());
 
 // Rutas
 app.use('/api', productoRoutes);
-app.use('/api', comandaRoutes);
+app.use('/api/pedidos', pedidoRoutes);
 
 
 // Inicialización del servidor
