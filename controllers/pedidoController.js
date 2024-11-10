@@ -1,7 +1,6 @@
 const Pedido = require('../models/Pedido');
 const Producto = require('../models/Producto');
-//const { getCotizacionDolar } = require('../utils/dolarUtils');
-
+const { getCotizacionDolar } = require('../utils/dolarUtils');
 let cotizacionDolarCache = null;
 let lastCotizacionTimestamp = 0;
 
@@ -22,7 +21,6 @@ async function getCotizacionDolar() {
     throw new Error("No se pudo obtener la cotización del dólar");
   }
 }
-
 
 // Obtener todos los pedidos
 exports.getAllPedidos = async (req, res) => {
@@ -68,12 +66,15 @@ exports.createPedido = async (req, res) => {
     // Obtener cotización del dólar
     const cotizacionDolar = await getCotizacionDolar();
 
-    // Calcular precios
-    const precio_dolar = producto.precio * cantidad;
-    const precio_pesos = precio_dolar * cotizacionDolar;
+    // Calcular precio total en dólares
+    const precioTotal = producto.precio * cantidad;
 
-    // Crear pedido
-    const nuevoPedido = { producto_id, cantidad, precio_dolar, precio_pesos };
+    // Crear pedido con estado inicial "Pendiente"
+    const nuevoPedido = {
+      precio_total: precioTotal,
+      cotizacion_dolar: cotizacionDolar,
+      estado: 'Pendiente'
+    };
     const result = await Pedido.create(nuevoPedido);
 
     // Actualizar stock del producto
@@ -88,10 +89,10 @@ exports.createPedido = async (req, res) => {
   }
 };
 
-// Actualizar un pedido
+// Actualizar un pedido (por ejemplo, cambiar estado)
 exports.updatePedido = async (req, res) => {
   const { id } = req.params;
-  const { cantidad } = req.body;
+  const { estado } = req.body;
 
   try {
     const pedido = await Pedido.getById(id);
@@ -99,8 +100,8 @@ exports.updatePedido = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
     }
 
-    await Pedido.updateById(id, { cantidad });
-    res.status(200).json({ success: true, data: { id, cantidad } });
+    await Pedido.updateById(id, { estado });
+    res.status(200).json({ success: true, data: { id, estado } });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Error al actualizar el pedido: ' + error.message });
   }

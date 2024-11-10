@@ -21,11 +21,11 @@ const Pedido = {
   },
 
   create: async (pedido) => {
-    const { producto_id, cantidad, precio_dolar, precio_pesos } = pedido;
+    const { precio_total, cotizacion_dolar, estado } = pedido;
     try {
       const [result] = await db.query(
-        'INSERT INTO pedidos (producto_id, cantidad, precio_dolar, precio_pesos) VALUES (?, ?, ?, ?)',
-        [producto_id, cantidad, precio_dolar, precio_pesos]
+        'INSERT INTO pedidos (precio_total, cotizacion_dolar, estado) VALUES (?, ?, ?)',
+        [precio_total, cotizacion_dolar, estado]
       );
       return result;
     } catch (err) {
