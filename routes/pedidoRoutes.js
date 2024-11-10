@@ -12,10 +12,10 @@ router.put('/:id', authMiddleware, pedidoController.actualizarPedido);
 router.delete('/:id', authMiddleware, pedidoController.eliminarPedido);*/
 
 // Rutas de pedidos protegidas por token
-router.get('/', pedidoController.obtenerPedidos);
-router.get('/:id', pedidoController.obtenerPedidoPorId);
-router.post('/', authMiddleware, pedidoController.crearPedido);
-router.put('/:id', authMiddleware, pedidoController.actualizarPedido);
-router.delete('/:id', authMiddleware, pedidoController.eliminarPedido);
+router.get('/pedidos', pedidoController.obtenerPedidos);
+router.get('/pedidos/:id', pedidoController.obtenerPedidoPorId);
+router.post('/pedidos/', authMiddleware, pedidoController.crearPedido);
+router.put('/pedidos/:id', authMiddleware, pedidoController.actualizarPedido);
+router.delete('/pedidos/:id', authMiddleware, pedidoController.eliminarPedido);
 
 module.exports = router;
