@@ -33,7 +33,7 @@ app.use(express.json());
 
 // Rutas
 app.use('/api', productoRoutes);
-app.use('/api/pedidos', pedidoRoutes);
+app.use('/api', pedidoRoutes);
 
 
 // Inicialización del servidor
