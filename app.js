@@ -3,6 +3,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const app = express();
 const productoRoutes = require('./routes/productoRoutes');
+const pedidoRoutes = require('./routes/pedidoRoutes');
 
 
 require('dotenv').config();
