@@ -97,7 +97,6 @@ exports.createPedido = async (req, res) => {
   }
 };
 
-// Actualizar un pedido (por ejemplo, cambiar estado)
 exports.updatePedido = async (req, res) => {
   const { id } = req.params;
   const { estado } = req.body;
@@ -108,14 +107,28 @@ exports.updatePedido = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
     }
 
+    // Actualizar estado del pedido
     await Pedido.updateById(id, { estado });
-    res.status(200).json({ success: true, data: { id, estado } });
+
+    // Devolver información sobre el producto relacionado
+    const productoId = pedido.producto_id;
+
+    res.status(200).json({
+      success: true,
+      message: 'Pedido actualizado',
+      data: {
+        pedido_id: id,
+        producto_actualizado: { id: productoId, estado },
+      },
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Error al actualizar el pedido: ' + error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Error al actualizar el pedido: ' + error.message,
+    });
   }
 };
 
-// Eliminar un pedido
 exports.deletePedido = async (req, res) => {
   const { id } = req.params;
 
@@ -125,9 +138,15 @@ exports.deletePedido = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
     }
 
+    // Eliminar el pedido
     await Pedido.deleteById(id);
-    res.status(200).json({ success: true, data: pedido });
+
+    // Devolver respuesta con código 204
+    res.status(204).send();
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Error al eliminar el pedido: ' + error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Error al eliminar el pedido: ' + error.message,
+    });
   }
 };
