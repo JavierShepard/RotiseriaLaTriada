@@ -1,25 +1,5 @@
-const Pedido = require ('../models/pedido');
+const Pedido = require('../models/pedido');
 const Producto = require('../models/Producto');
-let cotizacionDolarCache = null;
-let lastCotizacionTimestamp = 0;
-
-async function getCotizacionDolar() {
-  const now = Date.now();
-  if (cotizacionDolarCache && (now - lastCotizacionTimestamp) < 10 * 60 * 1000) {
-    // Retorna la cotización en caché si es reciente (10 minutos)
-    return cotizacionDolarCache;
-  }
-  
-  try {
-    const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
-    cotizacionDolarCache = response.data.rates.ARS;
-    lastCotizacionTimestamp = now;
-    return cotizacionDolarCache;
-  } catch (error) {
-    console.error("Error al obtener la cotización del dólar:", error.message);
-    throw new Error("No se pudo obtener la cotización del dólar");
-  }
-}
 
 // Obtener todos los pedidos
 exports.getAllPedidos = async (req, res) => {
@@ -46,6 +26,7 @@ exports.getPedidoById = async (req, res) => {
   }
 };
 
+// Crear un pedido
 exports.createPedido = async (req, res) => {
   const { producto_id, cantidad } = req.body;
 
@@ -71,16 +52,13 @@ exports.createPedido = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Stock insuficiente' });
     }
 
-    // Obtener cotización del dólar
-    const cotizacionDolar = await getCotizacionDolar();
-
-    // Calcular precio total en dólares
+    // Calcular precio total
     const precioTotal = producto.precio * cantidad;
 
     // Crear pedido con estado inicial "Pendiente"
     const nuevoPedido = {
       precio_total: precioTotal,
-      cotizacion_dolar: cotizacionDolar,
+      cotizacion_dolar: null, // Cotización ya no se incluye
       estado: 'Pendiente',
     };
     const result = await Pedido.create(nuevoPedido);
@@ -97,6 +75,7 @@ exports.createPedido = async (req, res) => {
   }
 };
 
+// Actualizar un pedido
 exports.updatePedido = async (req, res) => {
   const { id } = req.params;
   const { estado } = req.body;
@@ -129,6 +108,7 @@ exports.updatePedido = async (req, res) => {
   }
 };
 
+// Eliminar un pedido
 exports.deletePedido = async (req, res) => {
   const { id } = req.params;
 
