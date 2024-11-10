@@ -5,9 +5,12 @@ const { getCotizacionDolar, validarToken } = require('../services/cotizacionServ
 exports.getAllComandas = async (req, res) => {
   try {
     const comandas = await Comanda.getAll();
-    if (comandas.length === 0) {
+
+    // Si no hay comandas, responder con un mensaje adecuado
+    if (!comandas || comandas.length === 0) {
       return res.status(404).json({ error: 'No se encontraron comandas.' });
     }
+
     res.status(200).json(comandas);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener las comandas.' });

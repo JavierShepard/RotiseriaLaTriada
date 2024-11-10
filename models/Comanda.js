@@ -4,16 +4,32 @@ const Comanda = {
   getAll: async () => {
     try {
       const [comandas] = await db.query('SELECT * FROM comandas');
+
+      // Si no hay comandas, retorna un array vacío
+      if (comandas.length === 0) return [];
+
+      // Asocia productos a cada comanda
       const comandasWithProducts = await Promise.all(
         comandas.map(async (comanda) => {
           const productos = await Comanda.getProductosByComandaId(comanda.id);
           return { ...comanda, productos };
         })
       );
+
       return comandasWithProducts;
     } catch (err) {
       console.error('Error al obtener todas las comandas:', err.message);
       throw new Error('Error al obtener todas las comandas.');
+    }
+  },
+
+  getProductosByComandaId: async (id_comanda) => {
+    try {
+      const [productos] = await db.query('SELECT * FROM comanda_productos WHERE id_comanda = ?', [id_comanda]);
+      return productos || [];
+    } catch (err) {
+      console.error(`Error al obtener productos de la comanda con ID ${id_comanda}:`, err.message);
+      throw new Error('Error al obtener productos de la comanda.');
     }
   },
 
