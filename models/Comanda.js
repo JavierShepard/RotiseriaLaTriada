@@ -18,7 +18,7 @@ const Comanda = {
   // Obtener todas las comandas
   getAll: async () => {
     try {
-      const [results] = await db.query('SELECT * FROM comandas');
+      const [results] = await db.query('SELECT * FROM productos');
       return results;
     } catch (err) {
       throw err;
