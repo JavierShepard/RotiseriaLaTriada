@@ -1,29 +1,26 @@
 const Pedido = require ('../models/pedido');
 const Producto = require('../models/Producto');
-//const { getCotizacionDolar } = require('../utils/dolarUtils');
 let cotizacionDolarCache = null;
 let lastCotizacionTimestamp = 0;
 
 async function getCotizacionDolar() {
   const now = Date.now();
   if (cotizacionDolarCache && (now - lastCotizacionTimestamp) < 10 * 60 * 1000) {
-    return cotizacionDolarCache; // Devuelve la cotización en caché si es reciente
+    // Retorna la cotización en caché si es reciente (10 minutos)
+    return cotizacionDolarCache;
   }
   
   try {
     const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
-    if (response.data && response.data.rates && response.data.rates.ARS) {
-      cotizacionDolarCache = response.data.rates.ARS;
-      lastCotizacionTimestamp = now;
-      return cotizacionDolarCache;
-    } else {
-      throw new Error('La respuesta de la API no contiene la tasa ARS.');
-    }
+    cotizacionDolarCache = response.data.rates.ARS;
+    lastCotizacionTimestamp = now;
+    return cotizacionDolarCache;
   } catch (error) {
     console.error("Error al obtener la cotización del dólar:", error.message);
-    throw new Error("No se pudo obtener la cotización del dólar. Por favor intente más tarde.");
+    throw new Error("No se pudo obtener la cotización del dólar");
   }
 }
+
 // Obtener todos los pedidos
 exports.getAllPedidos = async (req, res) => {
   try {
