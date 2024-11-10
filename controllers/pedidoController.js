@@ -11,7 +11,7 @@ exports.getAllPedidos = async (req, res) => {
   }
 };
 
-// Obtener un pedido por ID
+/* Obtener un pedido por ID
 exports.getPedidoById = async (req, res) => {
   const { id } = req.params;
 
@@ -24,9 +24,35 @@ exports.getPedidoById = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
+};*/
+exports.getPedidoById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const pedido = await Pedido.getById(id);
+    if (!pedido) {
+      return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
+    }
+
+    const [productos] = await db.query(
+      'SELECT producto_id AS id, cantidad, subtotal FROM pedido_productos WHERE pedido_id = ?',
+      [id]
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        ...pedido,
+        productos,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error al obtener el pedido: ' + error.message });
+  }
 };
 
-// Crear un pedido
+
+/* Crear un pedido
 exports.createPedido = async (req, res) => {
   const { producto_id, cantidad } = req.body;
 
@@ -72,6 +98,78 @@ exports.createPedido = async (req, res) => {
     res.status(201).json({
       success: true,
       data: { id: result.insertId, ...nuevoPedido },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error al crear el pedido: ' + error.message });
+  }
+};*/
+exports.createPedido = async (req, res) => {
+  const { productos } = req.body; // Lista de productos [{producto_id, cantidad}]
+  const cotizacionDolar = 300; // Valor estático
+
+  try {
+    // Validar que se envíen productos
+    if (!Array.isArray(productos) || productos.length === 0) {
+      return res.status(400).json({ success: false, error: 'Debe proporcionar una lista de productos.' });
+    }
+
+    // Validar que cada producto tenga la información requerida
+    for (const producto of productos) {
+      if (!producto.producto_id || !producto.cantidad || producto.cantidad <= 0) {
+        return res.status(400).json({ success: false, error: 'Cada producto debe tener producto_id y una cantidad válida.' });
+      }
+    }
+
+    // Crear el pedido principal
+    const nuevoPedido = {
+      precio_total: 0, // Se calculará más adelante
+      cotizacion_dolar: cotizacionDolar,
+      estado: 'Pendiente',
+    };
+    const result = await Pedido.create(nuevoPedido);
+    const pedidoId = result.insertId;
+
+    let precioTotal = 0;
+
+    // Procesar cada producto
+    for (const producto of productos) {
+      const productoData = await Producto.getByIdPromise(producto.producto_id);
+      if (!productoData) {
+        return res.status(404).json({ success: false, error: `Producto con ID ${producto.producto_id} no encontrado.` });
+      }
+
+      // Verificar stock disponible
+      if (productoData.stock < producto.cantidad) {
+        return res.status(400).json({ success: false, error: `Stock insuficiente para el producto ID ${producto.producto_id}.` });
+      }
+
+      // Calcular subtotal y reducir stock
+      const subtotal = productoData.precio * producto.cantidad;
+      precioTotal += subtotal;
+
+      await Producto.updateById(producto.producto_id, {
+        stock: productoData.stock - producto.cantidad,
+      });
+
+      // Guardar en la tabla `pedido_productos`
+      await db.query(
+        'INSERT INTO pedido_productos (pedido_id, producto_id, cantidad, subtotal) VALUES (?, ?, ?, ?)',
+        [pedidoId, producto.producto_id, producto.cantidad, subtotal]
+      );
+    }
+
+    // Actualizar el precio total del pedido
+    await Pedido.updateById(pedidoId, { precio_total: precioTotal });
+
+    res.status(201).json({
+      success: true,
+      message: 'Pedido creado con éxito.',
+      data: {
+        id: pedidoId,
+        precio_total: precioTotal,
+        cotizacion_dolar: cotizacionDolar,
+        estado: 'Pendiente',
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Error al crear el pedido: ' + error.message });
