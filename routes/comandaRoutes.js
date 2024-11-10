@@ -5,8 +5,8 @@ const authMiddleware = require('../middlewares/authMiddleware');
 
 // Rutas protegidas con autenticación
 router.post('/', authMiddleware, comandaController.createComanda); // Crear una nueva comanda
-router.put('/:id', authMiddleware, comandaController.updateComanda); // Actualizar una comanda existente
-router.delete('/:id', authMiddleware, comandaController.deleteComanda); // Eliminar una comanda por ID
+//router.put('/:id', authMiddleware, comandaController.updateComanda); // Actualizar una comanda existente
+//router.delete('/:id', authMiddleware, comandaController.deleteComanda); // Eliminar una comanda por ID
 
 // Rutas públicas
 router.get('/', comandaController.getAllComandas); // Obtener todas las comandas
