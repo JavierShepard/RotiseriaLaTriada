@@ -55,10 +55,13 @@ exports.createPedido = async (req, res) => {
     // Calcular precio total
     const precioTotal = producto.precio * cantidad;
 
+    // Asignar un valor estático para cotización del dólar
+    const cotizacionDolar = 300;
+
     // Crear pedido con estado inicial "Pendiente"
     const nuevoPedido = {
       precio_total: precioTotal,
-      cotizacion_dolar: null, // Cotización ya no se incluye
+      cotizacion_dolar: cotizacionDolar,
       estado: 'Pendiente',
     };
     const result = await Pedido.create(nuevoPedido);
@@ -126,7 +129,6 @@ exports.deletePedido = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Error al eliminar el pedido: ' + error.message,
-    });
+      error: 'Error al eliminar el pedido: ' + error.message });
   }
 };
