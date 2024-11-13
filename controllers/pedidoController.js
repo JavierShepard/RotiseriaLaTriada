@@ -147,7 +147,7 @@ exports.createPedido = async (req, res) => {
 };
 
  //Actualizar un pedido
-exports.updatePedido = async (req, res) => {
+/*exports.updatePedido = async (req, res) => {
   const { id } = req.params;
   const { estado } = req.body;
 
@@ -158,6 +158,30 @@ exports.updatePedido = async (req, res) => {
     }
 
     await Pedido.updateById(id, { estado });
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error al actualizar el pedido:', error.message);
+    res.status(500).json({ error: 'Error al actualizar el pedido.' });
+  }
+};*/
+// Actualizar parcialmente un pedido usando PATCH
+exports.updatePedidoPatch = async (req, res) => {
+  const { id } = req.params;
+  const fieldsToUpdate = {};
+
+  // Solo agrega los campos recibidos en el body
+  if (req.body.estado) fieldsToUpdate.estado = req.body.estado;
+  if (req.body.precio_total !== undefined) fieldsToUpdate.precio_total = req.body.precio_total;
+
+  try {
+    const pedido = await Pedido.getById(id);
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido no encontrado.' });
+    }
+
+    // Actualizar solo los campos proporcionados en el body
+    await Pedido.updateById(id, fieldsToUpdate);
 
     res.status(204).send();
   } catch (error) {
