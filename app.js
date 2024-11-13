@@ -14,7 +14,7 @@ const allowedOrigins = ['http://localhost:5174', 'http://localhost:5173', 'https
 // Configuración del middleware CORS dinámico
 app.use(cors({
   origin: '*',  // Permitir todos los orígenes temporalmente
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE','PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
