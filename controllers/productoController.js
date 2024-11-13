@@ -119,7 +119,7 @@ exports.deleteProducto = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Producto no encontrado' });
     }
     await Producto.deleteById(id);
-    res.status(200).json({ success: true, data: producto });
+    res.status(204).send(); // No Content
   } catch (error) {
     res.status(500).json({ success: false, error: 'Error al eliminar el producto: ' + error.message });
   }
