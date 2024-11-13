@@ -27,7 +27,7 @@ async function getCotizacionDolar() {
   }
 }
 
-// Obtener todos los pedidos
+// Obtener todos los pedidos 
 exports.getAllPedidos = async (req, res) => {
   try {
     const pedidos = await Pedido.getAll();
@@ -40,12 +40,13 @@ exports.getAllPedidos = async (req, res) => {
       pedido.productos = productos; // Agregar productos al pedido
     }
 
-    res.status(200).json({ success: true, data: pedidos });
+    res.status(200).json(pedidos); // Devolver directamente el array de pedidos
   } catch (error) {
     console.error('Error al obtener los pedidos:', error.message);
-    res.status(500).json({ success: false, error: 'Error al obtener los pedidos.' });
+    res.status(500).json({ error: 'Error al obtener los pedidos.' });
   }
 };
+
 
 // Obtener un pedido por ID
 exports.getPedidoById = async (req, res) => {
@@ -71,138 +72,6 @@ exports.getPedidoById = async (req, res) => {
   }
 };
 
-/* Crear un pedido
-exports.createPedido = async (req, res) => {
-  const { productos } = req.body;
-
-  try {
-    if (!Array.isArray(productos) || productos.length === 0) {
-      return res.status(400).json({ success: false, error: 'Debe proporcionar una lista de productos.' });
-    }
-
-    for (const producto of productos) {
-      if (!producto.producto_id || !producto.cantidad || producto.cantidad <= 0) {
-        return res.status(400).json({ success: false, error: 'Cada producto debe tener producto_id y una cantidad válida.' });
-      }
-    }
-
-    const cotizacionDolar = await getCotizacionDolar();
-
-    const nuevoPedido = {
-      precio_total: 0, // Se calcula más adelante
-      cotizacion_dolar: cotizacionDolar,
-      estado: 'Pendiente',
-    };
-    const result = await Pedido.create(nuevoPedido);
-    const pedidoId = result.insertId;
-
-    let precioTotalDolares = 0;
-
-    for (const producto of productos) {
-      const productoData = await Producto.getByIdPromise(producto.producto_id);
-      if (!productoData) {
-        return res.status(404).json({ success: false, error: `Producto con ID ${producto.producto_id} no encontrado.` });
-      }
-
-      if (productoData.stock < producto.cantidad) {
-        return res.status(400).json({ success: false, error: `Stock insuficiente para el producto ID ${producto.producto_id}.` });
-      }
-
-      const subtotal = productoData.precio * producto.cantidad;
-      precioTotalDolares += subtotal;
-
-      await Producto.updateById(producto.producto_id, {
-        stock: productoData.stock - producto.cantidad,
-      });
-
-      await db.query(
-        'INSERT INTO pedido_productos (pedido_id, producto_id, cantidad, subtotal) VALUES (?, ?, ?, ?)',
-        [pedidoId, producto.producto_id, producto.cantidad, subtotal]
-      );
-    }
-
-    const precioTotalPesos = precioTotalDolares * cotizacionDolar;
-
-    await Pedido.updateById(pedidoId, { precio_total: precioTotalPesos });
-
-    res.status(201).json({
-      success: true,
-      data: {
-        id: pedidoId,
-        precio_total: precioTotalPesos,
-        estado: 'Pendiente',
-      },
-    });
-  } catch (error) {
-    console.error('Error al crear el pedido:', error.message);
-    res.status(500).json({ success: false, error: 'Error al crear el pedido.' });
-  }
-};*/
-/* Crear un pedido
-exports.createPedido = async (req, res) => {
-  const { productos } = req.body;
-
-  try {
-    if (!Array.isArray(productos) || productos.length === 0) {
-      return res.status(400).json({ error: 'Debe proporcionar una lista de productos.' });
-    }
-
-    for (const producto of productos) {
-      if (!producto.producto_id || !producto.cantidad || producto.cantidad <= 0) {
-        return res.status(400).json({ error: 'Cada producto debe tener producto_id y una cantidad válida.' });
-      }
-    }
-
-    const cotizacionDolar = await getCotizacionDolar();
-
-    const nuevoPedido = {
-      precio_total: 0,
-      cotizacion_dolar: cotizacionDolar,
-      estado: 'Pendiente',
-    };
-    const result = await Pedido.create(nuevoPedido);
-    const pedidoId = result.insertId;
-
-    let precioTotalDolares = 0;
-
-    for (const producto of productos) {
-      const productoData = await Producto.getByIdPromise(producto.producto_id);
-      if (!productoData) {
-        return res.status(404).json({ error: `Producto con ID ${producto.producto_id} no encontrado.` });
-      }
-
-      if (productoData.stock < producto.cantidad) {
-        return res.status(400).json({ error: `Stock insuficiente para el producto ID ${producto.producto_id}.` });
-      }
-
-      const subtotal = productoData.precio * producto.cantidad;
-      precioTotalDolares += subtotal;
-
-      await Producto.updateById(producto.producto_id, {
-        stock: productoData.stock - producto.cantidad,
-      });
-
-      await db.query(
-        'INSERT INTO pedido_productos (pedido_id, producto_id, cantidad, subtotal) VALUES (?, ?, ?, ?)',
-        [pedidoId, producto.producto_id, producto.cantidad, subtotal]
-      );
-    }
-
-    const precioTotalPesos = precioTotalDolares * cotizacionDolar;
-
-    await Pedido.updateById(pedidoId, { precio_total: precioTotalPesos });
-
-    res.status(201).json({
-      id: pedidoId,
-      precio_total: precioTotalPesos,
-      estado: 'Pendiente',
-    });
-  } catch (error) {
-    console.error('Error al crear el pedido:', error.message);
-    res.status(500).json({ error: 'Error al crear el pedido.' });
-  }
-};
-*/
 // Crear un pedido
 exports.createPedido = async (req, res) => {
   const { productos } = req.body;
@@ -325,7 +194,7 @@ exports.updatePedido = async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar el pedido.' });
   }
 };*/
-// Actualizar un pedido
+/* Actualizar un pedido
 exports.updatePedido = async (req, res) => {
   const { id } = req.params;
   const { estado } = req.body;
@@ -344,6 +213,29 @@ exports.updatePedido = async (req, res) => {
   } catch (error) {
     console.error('Error al actualizar el pedido:', error.message);
     res.status(500).json({ error: 'Error al actualizar el pedido.' });
+  }
+};
+*/
+// Actualizar un pedido existente
+exports.updatePedido = async (req, res) => {
+  const { id } = req.params;
+  const { precio_total, cotizacion_dolar, estado } = req.body;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token de autorización faltante.' });
+  }
+
+  const tokenValido = await validarToken(token);
+  if (!tokenValido) {
+    return res.status(401).json({ error: 'No autorizado. Token inválido.' });
+  }
+
+  try {
+    await Pedido.update(id, { precio_total, cotizacion_dolar, estado });
+    res.status(204).send(); // Retorna un estado 204 sin cuerpo
+  } catch (error) {
+    res.status(500).json({ error: 'Error al actualizar el pedido: ' + error.message });
   }
 };
 
