@@ -172,7 +172,7 @@ exports.updatePedido = async (req, res) => {
     res.status(500).json({ success: false, error: 'Error al actualizar el pedido.' });
   }
 };*/
-/* Actualizar un pedido
+// Actualizar un pedido
 exports.updatePedido = async (req, res) => {
   const { id } = req.params;
   const { estado } = req.body;
@@ -193,9 +193,9 @@ exports.updatePedido = async (req, res) => {
     console.error('Error al actualizar el pedido:', error.message);
     res.status(500).json({ error: 'Error al actualizar el pedido.' });
   }
-};*/
+};
  //Actualizar un pedido
-exports.updatePedido = async (req, res) => {
+/*exports.updatePedido = async (req, res) => {
   const { id } = req.params;
   const { estado } = req.body;
 
@@ -214,7 +214,7 @@ exports.updatePedido = async (req, res) => {
     console.error('Error al actualizar el pedido:', error.message);
     res.status(500).json({ error: 'Error al actualizar el pedido.' });
   }
-};
+};*/
 
 
 
