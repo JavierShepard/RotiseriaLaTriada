@@ -49,30 +49,6 @@ exports.getProductoById = async (req, res) => {
     res.status(500).json({ error: error.message }); // Dejar el mensaje de error
   }
 };
-
-/* Crear un nuevo producto
-exports.createProducto = async (req, res) => {
-  const { nombre, stock, precio } = req.body;
-  const token = req.headers.authorization?.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ success: false, error: 'Token de autorización faltante.' });
-  }
-
-  const tokenValido = await validarToken(token);
-  if (!tokenValido) {
-    return res.status(401).json({ success: false, error: 'No autorizado. Token inválido.' });
-  }
-
-  try {
-    const nuevoProducto = { nombre, stock, precio };
-    const result = await Producto.create(nuevoProducto);
-    res.status(201).json({ success: true, data: { id: result.insertId, ...nuevoProducto } });
-  } catch (error) {
-    res.status(500).json({ success: false, error: 'Error al crear el producto: ' + error.message });
-  }
-};
-*/
 // Crear un nuevo producto
 exports.createProducto = async (req, res) => {
   const { nombre, stock, precio } = req.body;
@@ -96,51 +72,6 @@ exports.createProducto = async (req, res) => {
   }
 };
 
-
-/* Actualizar un producto existente
-exports.updateProducto = async (req, res) => {
-  const { id } = req.params;
-  const { nombre, stock, precio } = req.body;
-  const token = req.headers.authorization?.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'Token de autorización faltante.' });
-  }
-
-  const tokenValido = await validarToken(token);
-  if (!tokenValido) {
-    return res.status(401).json({ error: 'No autorizado. Token inválido.' });
-  }
-
-  try {
-    await Producto.update(id, { nombre, stock, precio });
-    res.status(204).send(); // Retorna un estado 204 sin cuerpo
-  } catch (error) {
-    res.status(500).json({ error: 'Error al actualizar el producto: ' + error.message });
-  }
-};*/
-/* Actualizar un producto existente
-exports.updateProducto = async (req, res) => {
-  const { id } = req.params;
-  const { nombre, stock, precio } = req.body;
-  const token = req.headers.authorization?.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'Token de autorización faltante.' });
-  }
-
-  const tokenValido = await validarToken(token);
-  if (!tokenValido) {
-    return res.status(401).json({ error: 'No autorizado. Token inválido.' });
-  }
-
-  try {
-    await Producto.update(id, { nombre, stock, precio });
-    res.status(204).send(); // Retorna un estado 204 sin cuerpo
-  } catch (error) {
-    res.status(500).json({ error: 'Error al actualizar el producto: ' + error.message });
-  }
-};*/
 // Actualizar un producto existente
 exports.updateProducto = async (req, res) => {
   const { id } = req.params;
@@ -178,10 +109,6 @@ exports.updateProducto = async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar el producto: ' + error.message });
   }
 };
-
-
-
-
 // Eliminar un producto por ID
 exports.deleteProducto = async (req, res) => {
   const { id } = req.params;
