@@ -28,11 +28,12 @@ async function validarToken(token) {
 exports.getAllProductos = async (req, res) => {
   try {
     const productos = await Producto.getAll();
-    res.status(200).json({ success: true, data: productos });
+    res.status(200).json(productos); // Devolver solo los productos
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ error: error.message }); // Dejar el mensaje de error
   }
 };
+
 
 // Obtener un producto por ID
 exports.getProductoById = async (req, res) => {
@@ -41,11 +42,11 @@ exports.getProductoById = async (req, res) => {
   try {
     const producto = await Producto.getByIdPromise(id);
     if (!producto) {
-      return res.status(404).json({ success: false, error: 'Producto no encontrado' });
+      return res.status(404).json({ error: 'Producto no encontrado' }); // Mantener mensaje de error
     }
-    res.status(200).json({ success: true, data: producto });
+    res.status(200).json(producto); // Devolver solo el producto
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ error: error.message }); // Dejar el mensaje de error
   }
 };
 
@@ -95,30 +96,27 @@ exports.createProducto = async (req, res) => {
   }
 };
 
-/* Actualizar un producto por ID
+
+/* Actualizar un producto existente
 exports.updateProducto = async (req, res) => {
   const { id } = req.params;
   const { nombre, stock, precio } = req.body;
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ success: false, error: 'Token de autorización faltante.' });
+    return res.status(401).json({ error: 'Token de autorización faltante.' });
   }
 
   const tokenValido = await validarToken(token);
   if (!tokenValido) {
-    return res.status(401).json({ success: false, error: 'No autorizado. Token inválido.' });
+    return res.status(401).json({ error: 'No autorizado. Token inválido.' });
   }
 
   try {
-    const result = await Producto.updateById(id, { nombre, stock, precio });
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, error: 'Producto no encontrado' });
-    }
-    const updatedProducto = await Producto.getByIdPromise(id);
-    res.status(200).json({ success: true, data: updatedProducto });
+    await Producto.update(id, { nombre, stock, precio });
+    res.status(204).send(); // Retorna un estado 204 sin cuerpo
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Error al actualizar el producto: ' + error.message });
+    res.status(500).json({ error: 'Error al actualizar el producto: ' + error.message });
   }
 };*/
 // Actualizar un producto existente
@@ -143,6 +141,7 @@ exports.updateProducto = async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar el producto: ' + error.message });
   }
 };
+
 
 
 // Eliminar un producto por ID
