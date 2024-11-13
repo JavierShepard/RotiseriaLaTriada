@@ -72,7 +72,7 @@ exports.createProducto = async (req, res) => {
   }
 };
 
-// Actualizar un producto existente
+/* Actualizar un producto existente
 exports.updateProducto = async (req, res) => {
   const { id } = req.params;
   const { nombre, stock, precio } = req.body;
@@ -104,6 +104,45 @@ exports.updateProducto = async (req, res) => {
     await Producto.updateById(id, fieldsToUpdate);
 
     // Responder con un 204 (sin cuerpo)
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: 'Error al actualizar el producto: ' + error.message });
+  }
+};
+*/
+
+// Controlador para actualizar parcialmente un producto
+exports.updateProductoPatch = async (req, res) => {
+  const { id } = req.params;
+  const { nombre, stock, precio } = req.body;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token de autorización faltante.' });
+  }
+
+  const tokenValido = await validarToken(token);
+  if (!tokenValido) {
+    return res.status(401).json({ error: 'No autorizado. Token inválido.' });
+  }
+
+  try {
+    // Verificar que el producto existe
+    const productoExistente = await Producto.getByIdPromise(id);
+    if (!productoExistente) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
+    // Preparar el objeto con los campos a actualizar (solo los que recibimos)
+    const fieldsToUpdate = {};
+    if (nombre) fieldsToUpdate.nombre = nombre;
+    if (stock !== undefined) fieldsToUpdate.stock = stock;
+    if (precio !== undefined) fieldsToUpdate.precio = precio;
+
+    // Actualizar el producto en la base de datos
+    await Producto.updateById(id, fieldsToUpdate);
+
+    // Responder con un 204 No Content
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Error al actualizar el producto: ' + error.message });

@@ -5,7 +5,8 @@ const authMiddleware = require('../middlewares/authMiddleware');
 
 // Rutas protegidas con autenticación
 router.post('/productos', authMiddleware, productoController.createProducto);  // Crear un producto
-router.put('/productos/:id', authMiddleware, productoController.updateProducto);  // Actualizar un producto por ID
+//router.put('/productos/:id', authMiddleware, productoController.updateProducto);  // Actualizar un producto por ID
+router.patch('/productos/:id', authMiddleware, productoController.updateProductoPatch);  // Actualizar parcialmente un producto por ID
 router.delete('/productos/:id', authMiddleware, productoController.deleteProducto);  // Eliminar un producto por ID
 
 // Rutas públicas
