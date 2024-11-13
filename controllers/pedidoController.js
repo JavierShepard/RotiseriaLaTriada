@@ -194,7 +194,7 @@ exports.updatePedido = async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar el pedido.' });
   }
 };*/
-/* Actualizar un pedido
+ //Actualizar un pedido
 exports.updatePedido = async (req, res) => {
   const { id } = req.params;
   const { estado } = req.body;
@@ -215,29 +215,7 @@ exports.updatePedido = async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar el pedido.' });
   }
 };
-*/
-// Actualizar un pedido existente
-exports.updatePedido = async (req, res) => {
-  const { id } = req.params;
-  const { precio_total, cotizacion_dolar, estado } = req.body;
-  const token = req.headers.authorization?.split(' ')[1];
 
-  if (!token) {
-    return res.status(401).json({ error: 'Token de autorización faltante.' });
-  }
-
-  const tokenValido = await validarToken(token);
-  if (!tokenValido) {
-    return res.status(401).json({ error: 'No autorizado. Token inválido.' });
-  }
-
-  try {
-    await Pedido.update(id, { precio_total, cotizacion_dolar, estado });
-    res.status(204).send(); // Retorna un estado 204 sin cuerpo
-  } catch (error) {
-    res.status(500).json({ error: 'Error al actualizar el pedido: ' + error.message });
-  }
-};
 
 
 // Eliminar un pedido
